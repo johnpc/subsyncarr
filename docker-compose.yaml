@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  subsyncarr:
+    image: mrorbitman/subsyncarr:latest
+    container_name: subsyncarr
+    volumes:
+      - ${MEDIA_PATH:-/path/to/your/media}:/scan_dir
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-UTC}
