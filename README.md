@@ -25,23 +25,15 @@ mkdir subsyncarr && cd subsyncarr
 
 ```bash
 curl -O https://raw.githubusercontent.com/johnpc/subsyncarr/main/docker-compose.yml
-curl -O https://raw.githubusercontent.com/johnpc/subsyncarr/main/.env.example
 ```
 
-#### 3. Create your .env file:
+#### 3. Edit the docker-compose.yml file with your timezone and paths:
 
 ```bash
-cp .env.example .env
-```
-
-#### 4. Edit the .env file with your settings:
-
-```bash
-MEDIA_PATH=/path/to/your/media
 TZ=America/New_York  # Adjust to your timezone
 ```
 
-#### 5. Start the container:
+#### 4. Start the container:
 
 ```bash
 docker-compose up -d
