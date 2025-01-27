@@ -21,7 +21,7 @@ An automated subtitle synchronization tool that runs as a Docker container. It w
 mkdir subsyncarr && cd subsyncarr
 ```
 
-#### 2. Download the docker-compose.yml and .env.example files:
+#### 2. Download the docker-compose.yml file:
 
 ```bash
 curl -O https://raw.githubusercontent.com/johnpc/subsyncarr/main/docker-compose.yml
