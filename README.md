@@ -36,7 +36,7 @@ TZ=America/New_York  # Adjust to your timezone
 #### 4. Start the container:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Configuration
