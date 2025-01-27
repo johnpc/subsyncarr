@@ -60,11 +60,13 @@ The container is configured to:
 
 Your media directory should be organized as follows:
 
+```txt
 /media
 ├── movie1.mkv
 ├── movie1.srt
 ├── movie2.mp4
 └── movie2.srt
+```
 
 It should follow the naming conventions expected by other services like Bazarr and Jellyfin.
 
