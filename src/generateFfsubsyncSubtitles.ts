@@ -1,6 +1,6 @@
-import { access } from 'fs/promises';
 import { basename, dirname, join } from 'path';
 import { execPromise, ProcessingResult } from './helpers';
+import { existsSync } from 'fs';
 
 export async function generateFfsubsyncSubtitles(srtPath: string, videoPath: string): Promise<ProcessingResult> {
   const directory = dirname(srtPath);
@@ -8,14 +8,12 @@ export async function generateFfsubsyncSubtitles(srtPath: string, videoPath: str
   const outputPath = join(directory, `${srtBaseName}.ffsubsync.srt`);
 
   // Check if synced subtitle already exists
-  try {
-    await access(outputPath);
+  const exists = existsSync(outputPath);
+  if (exists) {
     return {
       success: true,
       message: `Skipping ${outputPath} - already processed`,
     };
-  } catch (error) {
-    // File doesn't exist, proceed with sync
   }
 
   try {

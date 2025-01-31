@@ -8,3 +8,4 @@ dist
 .husky
 Dockerfile
 .env*
+/app

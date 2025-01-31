@@ -14,6 +14,8 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Etc/UTC # Replace with your own timezone
-      - CRON_SCHEDULE='0 0 * * *' # Runs every day at midnight by default
+      - CRON_SCHEDULE=0 0 * * * # Runs every day at midnight by default
       - SCAN_PATHS=/movies,/tv,/anime # Remember to mount these as volumes. Must begin with /. Default valus is `/scan_dir`
       - EXCLUDE_PATHS=/movies/temp,/tv/downloads # Exclude certain sub-directories from the scan
+      - MAX_CONCURRENT_SYNC_TASKS=1 # Defaults to 1 if not set. Higher number will consume more CPU but sync your library faster
+      - INCLUDE_ENGINES=ffsubsync,autosubsync # If not set, all engines are used by default

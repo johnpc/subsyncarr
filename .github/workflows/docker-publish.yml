@@ -91,6 +91,8 @@ jobs:
                   - CRON_SCHEDULE=0 0 * * *  # Runs every day at midnight by default
                   - SCAN_PATHS=/movies,/tv,/anime # Remember to mount these as volumes. Must begin with /. Default valus is `/scan_dir`
                   - EXCLUDE_PATHS=/movies/temp,/tv/downloads # Exclude certain sub-directories from the scan
+                  - MAX_CONCURRENT_SYNC_TASKS=1
+                  - INCLUDE_ENGINES=ffsubsync,autosubsync # If not set, all engines are used by default
             ```
 
             Docker Hub URL: https://hub.docker.com/r/mrorbitman/subsyncarr/tags

@@ -7,10 +7,10 @@
   },
   "scripts": {
     "clean": "rm -rf dist; rm -rf node_modules; rm -rf build/* && rm -rf build",
-    "build": "prettier --write \"**/*\" && tsc",
+    "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint .",
-    "lint:fix": "npm run lint -- --fix",
+    "lint:fix": "prettier --write \"**/*\" && npm run lint -- --fix",
     "test": "echo \"todo: write tests\"",
     "prepare": "husky"
   },

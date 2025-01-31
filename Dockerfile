@@ -4,6 +4,8 @@ FROM node:20-bullseye
 # Set working directory
 WORKDIR /app
 
+RUN apt-get clean
+
 # Install system dependencies including ffmpeg, Python, and cron
 RUN apt-get update && apt-get install -y \
     ffmpeg \

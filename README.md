@@ -15,25 +15,25 @@ An automated subtitle synchronization tool that runs as a Docker container. It w
 
 ### Using Docker Compose (Recommended)
 
-#### 1. Create a new directory for your project:
+#### 1. Create a new directory for your project
 
 ```bash
 mkdir subsyncarr && cd subsyncarr
 ```
 
-#### 2. Download the docker-compose.yml file:
+#### 2. Download the docker-compose.yml file
 
 ```bash
-curl -O https://raw.githubusercontent.com/johnpc/subsyncarr/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/johnpc/subsyncarr/refs/heads/main/docker-compose.yaml
 ```
 
-#### 3. Edit the docker-compose.yml file with your timezone and paths:
+#### 3. Edit the docker-compose.yml file with your timezone and paths
 
 ```bash
 TZ=America/New_York  # Adjust to your timezone
 ```
 
-#### 4. Start the container:
+#### 4. Start the container
 
 ```bash
 docker compose up -d
