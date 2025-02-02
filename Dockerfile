@@ -35,6 +35,7 @@ RUN npm install --ignore-scripts
 
 # Copy the rest of your application
 COPY . .
+RUN mv bin/* /root/.local/bin/
 
 # Build TypeScript
 RUN npm run build

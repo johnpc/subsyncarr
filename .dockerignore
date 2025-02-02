@@ -1,0 +1,6 @@
+# .dockerignore
+node_modules
+vendor
+.git
+test-srts
+*.log
