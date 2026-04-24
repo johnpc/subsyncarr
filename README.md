@@ -109,6 +109,8 @@ docker run -d \
 | `SYNC_TIMEOUT`              | _(none)_                      | Timeout in seconds per sync operation (overrides SYNC_ENGINE_TIMEOUT_MS)         |
 | `SYNC_ENGINE_TIMEOUT_MS`    | `1800000`                     | Timeout for each sync engine in milliseconds (30 min default)                    |
 | `NODE_OPTIONS`             | `--max-old-space-size=512`    | Node.js options, used here to set memory limit (in MB)                           |
+| `WEB_PORT`                 | `3000`                        | Port for the web UI                                                              |
+| `WEB_HOST`                 | `127.0.0.1`                   | Host to bind the web UI to (`0.0.0.0` to expose externally)                     |
 | `TZ`                        | _(system)_                    | Timezone for logging and cron scheduling (e.g., `America/New_York`)              |
 | `PUID`                      | `1000`                        | User ID for file permissions (run `id -u` to find yours)                         |
 | `PGID`                      | `1000`                        | Group ID for file permissions (run `id -g` to find yours)                        |
