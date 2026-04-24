@@ -18,10 +18,10 @@ RUN npm install --ignore-scripts && npm rebuild better-sqlite3
 
 # Copy source and build
 COPY . .
-RUN mkdir -p /home/node/.local/bin/ && cp bin/* /home/node/.local/bin/
+RUN mkdir -p /home/node/.local/bin/ && cp bin/* /home/node/.local/bin/ && chown -R node:node /home/node/.local
 RUN npm run build
 
-# Install Python tools
+# Install Python tools as node user
 USER node
 RUN python3 -m pip install --user pipx \
     && python3 -m pipx ensurepath
