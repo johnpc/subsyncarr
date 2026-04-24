@@ -45,6 +45,8 @@ docker compose up -d
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `PUID` | `1000` | User ID for file ownership. Run `id -u` to find yours. |
+| `PGID` | `1000` | Group ID for file ownership. Run `id -g` to find yours. |
 | `SCAN_PATHS` | `/scan_dir` | Comma-separated list of directories to scan |
 | `EXCLUDE_PATHS` | _(none)_ | Comma-separated list of directories to exclude |
 | `INCLUDE_ENGINES` | `ffsubsync,autosubsync,alass` | Comma-separated list of sync engines to use |

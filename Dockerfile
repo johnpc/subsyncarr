@@ -1,27 +1,25 @@
 # Use Node.js LTS (Long Term Support) as base image
 FROM node:20-bullseye
 
-# Create app user and group with configurable UID/GID
+# Default PUID/PGID - can be overridden at runtime
 ENV PUID=1000
 ENV PGID=1000
 
-RUN mkdir -p /app
-RUN chown node:node /app
+RUN mkdir -p /app && chown node:node /app
 
-# Modify existing node user instead of creating new one
-RUN groupmod -g ${PGID} node && \
-    usermod -u ${PUID} -g ${PGID} node && \
-    chown -R node:node /home/node
-RUN apt-get clean
-
-# Install system dependencies including ffmpeg, Python, and cron
+# Install system dependencies including ffmpeg, Python, cron, and gosu
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
     python3-pip \
     python3-venv \
     cron \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 USER node
 # Set working directory
@@ -75,4 +73,7 @@ tail -f /app/logs/app.log' > /app/startup.sh
 RUN chmod +x /app/startup.sh
 
 # Use startup script as entrypoint
+# Switch to root so entrypoint can adjust PUID/PGID, then drops to node via gosu
+USER root
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/app/startup.sh"]
