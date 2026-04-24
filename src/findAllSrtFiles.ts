@@ -1,9 +1,22 @@
 import { readdir } from 'fs/promises';
-import { extname, join } from 'path';
+import { basename, dirname, extname, join } from 'path';
+import { existsSync } from 'fs';
 import { ScanConfig } from './config';
 
+function isAlreadySynced(srtPath: string, engines: string[]): boolean {
+  const directory = dirname(srtPath);
+  const srtBaseName = basename(srtPath, '.srt');
+
+  return engines.every((engine) => {
+    const outputPath = join(directory, `${srtBaseName}.${engine}.srt`);
+    return existsSync(outputPath);
+  });
+}
+
 export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
+  const engines = process.env.INCLUDE_ENGINES?.split(',') || ['ffsubsync', 'autosubsync', 'alass'];
   const files: string[] = [];
+  let skippedCount = 0;
 
   async function scan(directory: string): Promise<void> {
     // Check if this directory should be excluded
@@ -25,7 +38,11 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
         !entry.name.includes('.alass.') &&
         !entry.name.includes('.autosubsync.')
       ) {
-        files.push(fullPath);
+        if (isAlreadySynced(fullPath, engines)) {
+          skippedCount++;
+        } else {
+          files.push(fullPath);
+        }
       }
     }
   }
@@ -33,6 +50,10 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
   // Scan all included paths
   for (const includePath of config.includePaths) {
     await scan(includePath);
+  }
+
+  if (skippedCount > 0) {
+    console.log(`${new Date().toLocaleString()} Skipped ${skippedCount} already-synced SRT files`);
   }
 
   return files;
