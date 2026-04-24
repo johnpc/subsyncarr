@@ -41,12 +41,15 @@ docker compose up -d
 
 ## Configuration
 
-The container is configured to:
+### Environment Variables
 
-- Scan for subtitle files in the mounted directory
-- Run synchronization at container startup
-- Run daily at midnight (configurable via cron)
-- Generate synchronized subtitle versions using different tools (currently ffsubsync and autosubsync)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SCAN_PATHS` | `/scan_dir` | Comma-separated list of directories to scan |
+| `EXCLUDE_PATHS` | _(none)_ | Comma-separated list of directories to exclude |
+| `INCLUDE_ENGINES` | `ffsubsync,autosubsync,alass` | Comma-separated list of sync engines to use |
+| `MAX_CONCURRENT_SYNC_TASKS` | `1` | Number of files to process in parallel |
+| `SYNC_TIMEOUT` | _(none)_ | Timeout in seconds per sync operation. If a sync engine hangs, it will be killed and skipped after this duration. |
 
 ### Directory Structure
 
