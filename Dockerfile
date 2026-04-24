@@ -14,9 +14,12 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     cron \
-    gosu \
+
     build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Install gosu for PUID/PGID support
+RUN dpkgArch="$(dpkg --print-architecture)" && curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-$dpkgArch" -o /usr/local/bin/gosu && chmod +x /usr/local/bin/gosu
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
