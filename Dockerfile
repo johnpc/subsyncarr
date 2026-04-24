@@ -47,6 +47,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     cron \
     curl \
+    ca-certificates \
     && dpkgArch="$(dpkg --print-architecture)" \
     && curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-$dpkgArch" -o /usr/local/bin/gosu \
     && chmod +x /usr/local/bin/gosu \
