@@ -23,6 +23,8 @@ services:
         reservations:
           memory: 128M      # Minimum guaranteed memory
     environment:
+      - PUID=1000 # Set to your user's UID (run `id -u` to find it)
+      - PGID=1000 # Set to your user's GID (run `id -g` to find it)
       - TZ=Etc/UTC # Replace with your own timezone
       - PUID=1000
       - PGID=10

@@ -106,6 +106,7 @@ docker run -d \
 | `CRON_SCHEDULE`             | `0 0 * * *`                   | Cron expression for sync schedule (daily at midnight), or `disabled` to turn off |
 | `MAX_CONCURRENT_SYNC_TASKS` | `1`                           | Number of subtitle files to process in parallel (higher = faster but more CPU)   |
 | `INCLUDE_ENGINES`           | `ffsubsync,autosubsync,alass` | Which sync engines to use (comma-separated)                                      |
+| `SYNC_TIMEOUT`              | _(none)_                      | Timeout in seconds per sync operation (overrides SYNC_ENGINE_TIMEOUT_MS)         |
 | `SYNC_ENGINE_TIMEOUT_MS`    | `1800000`                     | Timeout for each sync engine in milliseconds (30 min default)                    |
 | `NODE_OPTIONS`             | `--max-old-space-size=512`    | Node.js options, used here to set memory limit (in MB)                           |
 | `TZ`                        | _(system)_                    | Timezone for logging and cron scheduling (e.g., `America/New_York`)              |
@@ -133,6 +134,7 @@ Example configuration:
 environment:
   - SYNC_ENGINE_TIMEOUT_MS=3600000 # 60 minutes for large files
 ```
+
 
 ### Directory Structure
 

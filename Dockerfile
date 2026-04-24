@@ -1,28 +1,26 @@
 # Use Node.js LTS (Long Term Support) as base image
 FROM node:20-bullseye
 
-# Create app user and group with configurable UID/GID
+# Default PUID/PGID - can be overridden at runtime
 ENV PUID=1000
 ENV PGID=1000
 
-RUN mkdir -p /app
-RUN chown node:node /app
+RUN mkdir -p /app && chown node:node /app
 
-# Modify existing node user instead of creating new one
-RUN groupmod -g ${PGID} node && \
-    usermod -u ${PUID} -g ${PGID} node && \
-    chown -R node:node /home/node
-RUN apt-get clean
-
-# Install system dependencies including ffmpeg, Python, cron, and build tools
+# Install system dependencies including ffmpeg, Python, cron, gosu, and build tools
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
     python3-pip \
     python3-venv \
     cron \
+    gosu \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 USER node
 # Set working directory
@@ -49,7 +47,6 @@ RUN npm run build
 # Create data directory for SQLite database
 RUN mkdir -p /app/data && chown node:node /app/data
 
-# Create startup script
 # Set default cron schedule (if not provided by environment variable)
 ENV CRON_SCHEDULE="0 0 * * *"
 
@@ -61,7 +58,6 @@ RUN python3 -m pip install --user pipx \
 ENV PATH="/home/node/.local/bin:$PATH"
 
 # Install ffsubsync and autosubsync using pipx
-# Clean caches after installation to reduce memory footprint
 RUN pipx install ffsubsync \
     && pipx install autosubsync \
     && python3 -m pip cache purge \
@@ -74,6 +70,7 @@ EXPOSE 3000
 # Default memory limit for Node.js
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
-# Use server as entrypoint (which includes cron scheduling)
-# Memory optimization flags: uses NODE_OPTIONS to prevent OOM
+# Switch to root so entrypoint can adjust PUID/PGID, then drops to node via gosu
+USER root
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "--optimize-for-size", "dist/index-server.js"]
