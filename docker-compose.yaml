@@ -13,6 +13,8 @@ services:
       - /path/to/anime:/anime
     restart: unless-stopped
     environment:
+      - PUID=1000 # Set to your user's UID (run `id -u` to find it)
+      - PGID=1000 # Set to your user's GID (run `id -g` to find it)
       - TZ=Etc/UTC # Replace with your own timezone
       - CRON_SCHEDULE=0 0 * * * # Runs every day at midnight by default
       - SCAN_PATHS=/movies,/tv,/anime # Remember to mount these as volumes. Must begin with /. Default valus is `/scan_dir`
