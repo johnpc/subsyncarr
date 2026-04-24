@@ -41,18 +41,18 @@ ENV CRON_SCHEDULE="0 0 * * *"
 ENV NODE_OPTIONS="--max-old-space-size=512"
 ENV PATH="/home/node/.local/bin:$PATH"
 
-# Install only runtime dependencies
+# Install runtime dependencies and gosu
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     python3 \
     cron \
     curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install gosu
-RUN dpkgArch="$(dpkg --print-architecture)" \
+    && dpkgArch="$(dpkg --print-architecture)" \
     && curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-$dpkgArch" -o /usr/local/bin/gosu \
-    && chmod +x /usr/local/bin/gosu
+    && chmod +x /usr/local/bin/gosu \
+    && apt-get purge -y curl \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
