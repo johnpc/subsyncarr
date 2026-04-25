@@ -28,6 +28,7 @@ ENV PATH="/home/node/.local/bin:$PATH"
 RUN pipx install ffsubsync \
     && pipx inject ffsubsync 'setuptools<82' \
     && pipx install autosubsync \
+    && pipx inject autosubsync 'setuptools<82' \
     && find /home/node/.local/share/pipx -type f -name "*.pyc" -delete 2>/dev/null || true \
     && find /home/node/.local/share/pipx -type d -name "__pycache__" -delete 2>/dev/null || true
 
