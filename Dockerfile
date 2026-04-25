@@ -1,5 +1,5 @@
 # === Build stage ===
-FROM node:20-bullseye AS builder
+FROM node:22-bookworm AS builder
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ RUN pipx install ffsubsync \
     && find /home/node/.local/share/pipx -type d -name "__pycache__" -delete 2>/dev/null || true
 
 # === Runtime stage ===
-FROM node:20-slim
+FROM node:22-slim
 
 ENV PUID=1000
 ENV PGID=1000
