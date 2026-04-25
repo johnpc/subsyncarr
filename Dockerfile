@@ -26,6 +26,7 @@ RUN npm run build
 USER node
 ENV PATH="/home/node/.local/bin:$PATH"
 RUN pipx install ffsubsync \
+    && pipx inject ffsubsync 'setuptools<82' \
     && pipx install autosubsync \
     && find /home/node/.local/share/pipx -type f -name "*.pyc" -delete 2>/dev/null || true \
     && find /home/node/.local/share/pipx -type d -name "__pycache__" -delete 2>/dev/null || true
