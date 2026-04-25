@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv \
+    pipx \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,12 +24,9 @@ RUN npm run build
 
 # Install Python tools as node user
 USER node
-RUN python3 -m pip install --user pipx \
-    && python3 -m pipx ensurepath
 ENV PATH="/home/node/.local/bin:$PATH"
 RUN pipx install ffsubsync \
     && pipx install autosubsync \
-    && python3 -m pip cache purge \
     && find /home/node/.local/share/pipx -type f -name "*.pyc" -delete 2>/dev/null || true \
     && find /home/node/.local/share/pipx -type d -name "__pycache__" -delete 2>/dev/null || true
 
