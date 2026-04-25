@@ -1,8 +1,8 @@
-# Subsyncarr Plus
+# Subsyncarr
 
-An automated subtitle synchronization tool that runs as a Docker container. It continuously monitors your media directories for video files with out-of-sync subtitles and automatically synchronizes them using three sync engines (ffsubsync, autosubsync, and alass). This is a fork from the software [subsyncarr](https://github.com/johnpc/subsyncarr).
+An automated subtitle synchronization tool that runs as a Docker container. It continuously monitors your media directories for video files with out-of-sync subtitles and automatically synchronizes them using three sync engines (ffsubsync, autosubsync, and alass).
 
-**Docker Hub:** [tomtomw123/subsyncarr-plus](https://hub.docker.com/r/tomtomw123/subsyncarr-plus)
+**Docker Hub:** [mrorbitman/subsyncarr](https://hub.docker.com/r/mrorbitman/subsyncarr)
 
 ## Features
 
@@ -26,12 +26,12 @@ An automated subtitle synchronization tool that runs as a Docker container. It c
 1. **Create a docker-compose.yaml file** with the following content:
 
 ```yaml
-name: subsyncarr-plus
+name: subsyncarr
 
 services:
-  subsyncarr-plus:
-    image: tomtomw123/subsyncarr-plus:latest
-    container_name: subsyncarr-plus
+  subsyncarr:
+    image: mrorbitman/subsyncarr:latest
+    container_name: subsyncarr
     user: '1000:10'
     ports:
       - '3000:3000' # Web UI
@@ -80,7 +80,7 @@ Open your browser to [http://localhost:3000](http://localhost:3000) or whatever 
 
 ```bash
 docker run -d \
-  --name subsyncarr-plus \
+  --name subsyncarr \
   --user 1000:10 \
   -p 3000:3000 \
   -v /path/to/movies:/movies \
@@ -92,7 +92,7 @@ docker run -d \
   -e CRON_SCHEDULE="0 0 * * *" \
   -e SCAN_PATHS=/movies,/tv \
   -e MAX_CONCURRENT_SYNC_TASKS=1 \
-  tomtomw123/subsyncarr-plus:latest
+  mrorbitman/subsyncarr:latest
 ```
 
 ## Configuration
@@ -119,7 +119,7 @@ docker run -d \
 
 | Variable                           | Default                        | Description                                 |
 | ---------------------------------- | ------------------------------ | ------------------------------------------- |
-| `DB_PATH`                          | `/app/data/subsyncarr-plus.db` | SQLite database location                    |
+| `DB_PATH`                          | `/app/data/subsyncarr.db` | SQLite database location                    |
 | `LOG_BUFFER_SIZE`                  | `1000`                         | Ring buffer size for in-memory logs         |
 | `RETENTION_KEEP_RUNS_DAYS`         | `30`                           | Keep complete runs for N days               |
 | `RETENTION_TRIM_LOGS_DAYS`         | `7`                            | Trim logs after N days (keeps summary only) |
@@ -242,7 +242,7 @@ Automatic cleanup keeps your database size manageable:
 ### View Container Logs
 
 ```bash
-docker logs -f subsyncarr-plus
+docker logs -f subsyncarr
 ```
 
 ### Check Web UI Logs
@@ -284,10 +284,10 @@ Check that:
 Pull the latest image:
 
 ```bash
-docker pull tomtomw123/subsyncarr-plus:latest
+docker pull mrorbitman/subsyncarr:latest
 ```
 
-**Docker Hub Repository:** [tomtomw123/subsyncarr-plus](https://hub.docker.com/r/tomtomw123/subsyncarr-plus)
+**Docker Hub Repository:** [mrorbitman/subsyncarr](https://hub.docker.com/r/mrorbitman/subsyncarr)
 
 ## Contributing
 

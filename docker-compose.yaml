@@ -1,9 +1,9 @@
-name: subsyncarr-plus
+name: subsyncarr
 
 services:
-  subsyncarr-plus:
-    image: tomtomw123/subsyncarr-plus:latest
-    container_name: subsyncarr-plus
+  subsyncarr:
+    image: mrorbitman/subsyncarr:latest
+    container_name: subsyncarr
     user: "1000:10"
     ports:
       - '3000:3000' # Web UI
@@ -42,4 +42,4 @@ services:
       # Web UI configuration (optional):
       # - WEB_PORT=3000                   # Port for web UI (default: 3000)
       # - WEB_HOST=127.0.0.1              # Host to bind to (default: 127.0.0.1, use 0.0.0.0 for all interfaces)
-      # - DB_PATH=/app/data/subsyncarr-plus.db # SQLite database location (default: /app/data/subsyncarr-plus.db)
+      # - DB_PATH=/app/data/subsyncarr.db # SQLite database location (default: /app/data/subsyncarr.db)
