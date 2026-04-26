@@ -1,4 +1,6 @@
 import Database from 'better-sqlite3';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface Run {
   id: string;
@@ -42,7 +44,23 @@ export class SubsyncarrPlusDatabase {
   private db: Database.Database;
 
   constructor(dbPath: string) {
-    this.db = new Database(dbPath);
+    const dir = path.dirname(dbPath);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+      // ignore — will fail on db open if truly inaccessible
+    }
+    try {
+      this.db = new Database(dbPath);
+    } catch (err: unknown) {
+      if (err instanceof Error && 'code' in err && err.code === 'SQLITE_CANTOPEN') {
+        throw new Error(
+          `Cannot open database at ${dbPath} — ensure the data directory exists and is writable. ` +
+            `If using Docker, check that your volume mount target exists and has correct permissions (PUID/PGID).`,
+        );
+      }
+      throw err;
+    }
     this.initSchema();
   }
 
