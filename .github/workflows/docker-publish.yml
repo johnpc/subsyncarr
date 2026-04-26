@@ -55,11 +55,27 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | head -2 | tail -1)
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s" HEAD)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s" ${PREV_TAG}..HEAD)
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           name: Release ${{ github.ref_name }}
           body: |
+            ## What's Changed
+            ${{ steps.changelog.outputs.changelog }}
+
             ## Docker Images
 
             Pull the image using:
@@ -67,32 +83,6 @@ jobs:
             docker pull mrorbitman/subsyncarr:${{ github.ref_name }}
             # or
             docker pull mrorbitman/subsyncarr:latest
-            ```
-
-            Example docker-compose.yaml:
-
-            ```
-            name: subsyncarr
-
-            services:
-              subsyncarr:
-                image: mrorbitman/subsyncarr:latest
-                container_name: subsyncarr
-                volumes:
-                  # Any path configured with SCAN_PATHS env var must be mounted
-                  # If no scan paths are specified, it defaults to scan `/scan_dir` like example below.
-                  # - ${MEDIA_PATH:-/path/to/your/media}:/scan_dir
-                  - /path/to/movies:/movies
-                  - /path/to/tv:/tv
-                  - /path/to/anime:/anime
-                restart: unless-stopped
-                environment:
-                  - TZ=${TZ:-UTC}
-                  - CRON_SCHEDULE=0 0 * * *  # Runs every day at midnight by default
-                  - SCAN_PATHS=/movies,/tv,/anime # Remember to mount these as volumes. Must begin with /. Default valus is `/scan_dir`
-                  - EXCLUDE_PATHS=/movies/temp,/tv/downloads # Exclude certain sub-directories from the scan
-                  - MAX_CONCURRENT_SYNC_TASKS=1
-                  - INCLUDE_ENGINES=ffsubsync,autosubsync # If not set, all engines are used by default
             ```
 
             Docker Hub URL: https://hub.docker.com/r/mrorbitman/subsyncarr/tags
