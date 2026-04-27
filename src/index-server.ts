@@ -8,7 +8,7 @@ import { getRetentionConfig } from './config';
 async function main() {
   const dbPath = process.env.DB_PATH || '/app/data/subsyncarr-plus.db';
   const port = parseInt(process.env.WEB_PORT || '3000', 10);
-  const host = process.env.WEB_HOST || '127.0.0.1';
+  const host = process.env.WEB_HOST || '0.0.0.0';
 
   console.log(`[${new Date().toISOString()}] Initializing Subsyncarr Plus Server...`);
 
