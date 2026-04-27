@@ -587,3 +587,70 @@ td {
   padding: 20px;
   font-style: italic;
 }
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  header {
+    padding: 16px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .status-indicators {
+    width: 100%;
+  }
+
+  .status-indicator,
+  .schedule-indicator {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+  }
+
+  .controls .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+  }
+
+  section {
+    padding: 16px;
+  }
+
+  .engine-key {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  /* History table: horizontal scroll */
+  #historySection {
+    overflow: visible;
+  }
+
+  #historyTable {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  th, td {
+    padding: 8px;
+    font-size: 13px;
+  }
+}
