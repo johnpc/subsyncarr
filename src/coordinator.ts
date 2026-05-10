@@ -1,7 +1,6 @@
 import { ProcessingEngine } from './processingEngine';
 import { StateManager } from './stateManager';
 import { ScanConfig } from './config';
-import { findMatchingVideoFile } from './findMatchingVideoFile';
 import { Run } from './database';
 import { once } from 'events';
 
@@ -33,16 +32,15 @@ export class ProcessingCoordinator {
     this.engine.on('run:files_found', (files: string[]) => {
       this.currentRunId = this.stateManager.startRun(files.length, this.enabledEngines);
 
-      // Add all files to database as pending
-      files.forEach((filePath) => {
-        const videoPath = findMatchingVideoFile(filePath);
-        this.stateManager.addFile(this.currentRunId!, filePath, videoPath);
-      });
+      // Add all files to database as pending (video matching happens during processing)
+      for (const filePath of files) {
+        this.stateManager.addFile(this.currentRunId!, filePath, null);
+      }
     });
 
-    this.engine.on('file:started', ({ srtPath }: { srtPath: string }) => {
+    this.engine.on('file:started', ({ srtPath, videoPath }: { srtPath: string; videoPath: string | null }) => {
       if (this.currentRunId) {
-        this.stateManager.updateFileStatus(this.currentRunId, srtPath, 'processing', null);
+        this.stateManager.updateFileStatus(this.currentRunId, srtPath, 'processing', null, videoPath);
       }
     });
 
