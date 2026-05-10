@@ -105,13 +105,15 @@ export class StateManager extends EventEmitter {
   // File management
   addFile(runId: string, filePath: string, videoPath: string | null): void {
     this.db.createFileResult(runId, filePath, videoPath);
-    this.emitFileUpdate(runId, filePath);
   }
 
-  updateFileStatus(runId: string, filePath: string, status: FileResult['status'], currentEngine?: string | null): void {
+  updateFileStatus(runId: string, filePath: string, status: FileResult['status'], currentEngine?: string | null, videoPath?: string | null): void {
     const updates: Partial<FileResult> = { status };
     if (currentEngine !== undefined) {
       updates.current_engine = currentEngine;
+    }
+    if (videoPath !== undefined) {
+      updates.video_path = videoPath;
     }
 
     this.db.updateFileResult(runId, filePath, updates);
