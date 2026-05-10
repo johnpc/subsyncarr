@@ -6,6 +6,8 @@ import { generateFfsubsyncSubtitles } from './generateFfsubsyncSubtitles';
 import { generateAutosubsyncSubtitles } from './generateAutosubsyncSubtitles';
 import { generateAlassSubtitles } from './generateAlassSubtitles';
 import { StateManager } from './stateManager';
+import { basename, dirname, join } from 'path';
+import { copyFileSync, unlinkSync } from 'fs';
 
 export class ProcessingEngine extends EventEmitter {
   private cancelledFiles: Set<string> = new Set();
@@ -13,6 +15,7 @@ export class ProcessingEngine extends EventEmitter {
   private enabledEngines: string[];
   private logBuffer: string[] = [];
   private maxLogBufferSize: number;
+  private overwriteSubtitles: boolean;
   public stateManager?: StateManager;
 
   constructor() {
@@ -20,6 +23,7 @@ export class ProcessingEngine extends EventEmitter {
     this.maxConcurrent = parseInt(process.env.MAX_CONCURRENT_SYNC_TASKS || '1', 10);
     this.enabledEngines = process.env.INCLUDE_ENGINES?.split(',') || ['ffsubsync', 'autosubsync', 'alass'];
     this.maxLogBufferSize = parseInt(process.env.LOG_BUFFER_SIZE || '1000', 10);
+    this.overwriteSubtitles = process.env.OVERWRITE_SUBTITLES === 'true';
   }
 
   private log(message: string): void {
@@ -50,7 +54,16 @@ export class ProcessingEngine extends EventEmitter {
     const srtFiles = await findAllSrtFiles(scanConfig);
     this.log(`[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files`);
 
-    this.emit('run:files_found', srtFiles);
+    if (this.overwriteSubtitles && this.stateManager) {
+      const filtered = srtFiles.filter((f) => !this.stateManager!.isFileProcessed(f));
+      const skipped = srtFiles.length - filtered.length;
+      if (skipped > 0) {
+        this.log(`[${new Date().toISOString()}] Skipped ${skipped} already-processed subtitle files`);
+      }
+      this.emit('run:files_found', filtered);
+    } else {
+      this.emit('run:files_found', srtFiles);
+    }
 
     // Process in batches
     this.log(`[${new Date().toISOString()}] Processing with concurrency: ${this.maxConcurrent}`);
@@ -168,6 +181,20 @@ export class ProcessingEngine extends EventEmitter {
 
         if (result.success) {
           anyEngineSucceeded = true;
+
+          if (this.overwriteSubtitles && this.stateManager) {
+            const engineOutputPath = join(dirname(srtPath), `${basename(srtPath, '.srt')}.${engine}.srt`);
+            copyFileSync(engineOutputPath, srtPath);
+            unlinkSync(engineOutputPath);
+            this.stateManager.markFileProcessed(srtPath, engine);
+            this.log(`[${new Date().toISOString()}] ✓ Overwritten original: ${fileName}`);
+            this.emit('file:engine_completed', {
+              srtPath,
+              engine,
+              result: { ...result, duration },
+            });
+            break;
+          }
         }
 
         this.emit('file:engine_completed', {

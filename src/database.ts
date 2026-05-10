@@ -123,6 +123,20 @@ export class SubsyncarrPlusDatabase {
       this.db.exec(`ALTER TABLE runs ADD COLUMN completed_engines INTEGER DEFAULT 0`);
     }
 
+    // Migration: Create processed_files table
+    const hasProcessedFiles = this.db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='processed_files'")
+      .all();
+    if (hasProcessedFiles.length === 0) {
+      this.db.exec(`
+        CREATE TABLE processed_files (
+          file_path TEXT PRIMARY KEY,
+          processed_at INTEGER NOT NULL,
+          engine TEXT NOT NULL
+        );
+      `);
+    }
+
     // Migration: Create engine_failure_tracking table
     const tables = this.db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='engine_failure_tracking'")
@@ -278,6 +292,18 @@ export class SubsyncarrPlusDatabase {
     `,
       )
       .all(runId) as FileResult[];
+  }
+
+  // Processed files methods (for overwrite mode)
+  isFileProcessed(filePath: string): boolean {
+    const result = this.db.prepare('SELECT 1 FROM processed_files WHERE file_path = ?').get(filePath);
+    return result !== undefined;
+  }
+
+  markFileProcessed(filePath: string, engine: string): void {
+    this.db
+      .prepare('INSERT OR REPLACE INTO processed_files (file_path, processed_at, engine) VALUES (?, ?, ?)')
+      .run(filePath, Date.now(), engine);
   }
 
   // Engine failure tracking methods
