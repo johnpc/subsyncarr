@@ -7,7 +7,7 @@ import { generateAutosubsyncSubtitles } from './generateAutosubsyncSubtitles';
 import { generateAlassSubtitles } from './generateAlassSubtitles';
 import { StateManager } from './stateManager';
 import { readFileSync, unlinkSync } from 'fs';
-import { getSubtitleFormat, getOutputPath, markSrtAsSynced } from './helpers';
+import { getSubtitleFormat, getOutputPath, markSrtAsSynced, isSyncedSrt } from './helpers';
 
 export class ProcessingEngine extends EventEmitter {
   private cancelledFiles: Set<string> = new Set();
@@ -74,7 +74,13 @@ export class ProcessingEngine extends EventEmitter {
 
   private async processFile(srtPath: string): Promise<void> {
     const fileName = srtPath.split('/').pop();
-    this.log(`[${new Date().toISOString()}] Processing: ${fileName}`);
+
+    // Skip already-synced files (overwrite mode)
+    if (this.subtitleFormat === 'overwrite' && (await isSyncedSrt(srtPath))) {
+      this.log(`[${new Date().toISOString()}] ⊘ Already synced (header): ${fileName}`);
+      this.emit('file:skipped', { srtPath, reason: 'already_synced' });
+      return;
+    }
 
     // Check if cancelled
     if (this.cancelledFiles.has(srtPath)) {
