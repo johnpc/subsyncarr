@@ -1,16 +1,18 @@
-import { execPromise, ProcessingResult, getOutputPath } from './helpers';
+import { execPromise, ProcessingResult, getOutputPath, getSubtitleFormat } from './helpers';
 import { existsSync } from 'fs';
 
 export async function generateAlassSubtitles(srtPath: string, videoPath: string): Promise<ProcessingResult> {
   const outputPath = getOutputPath(srtPath, 'alass');
 
-  const exists = existsSync(outputPath);
-  if (exists) {
-    return {
-      success: true,
-      message: `Skipping ${outputPath} - already processed`,
-      skipped: true,
-    };
+  if (getSubtitleFormat() !== 'overwrite') {
+    const exists = existsSync(outputPath);
+    if (exists) {
+      return {
+        success: true,
+        message: `Skipping ${outputPath} - already processed`,
+        skipped: true,
+      };
+    }
   }
 
   try {
