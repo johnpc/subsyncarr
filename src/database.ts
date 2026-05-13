@@ -300,6 +300,16 @@ export class SubsyncarrPlusDatabase {
       .get(runId, filePath) as FileResult | null;
   }
 
+  getFileResultsPaginated(runId: string, limit: number, offset: number): { files: FileResult[]; total: number } {
+    const total = (
+      this.db.prepare('SELECT COUNT(*) as count FROM file_results WHERE run_id = ?').get(runId) as { count: number }
+    ).count;
+    const files = this.db
+      .prepare('SELECT * FROM file_results WHERE run_id = ? ORDER BY created_at ASC LIMIT ? OFFSET ?')
+      .all(runId, limit, offset) as FileResult[];
+    return { files, total };
+  }
+
   // Processed files methods (for overwrite mode)
   isFileProcessed(filePath: string): boolean {
     const result = this.db.prepare('SELECT 1 FROM processed_files WHERE file_path = ?').get(filePath);

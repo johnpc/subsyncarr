@@ -191,6 +191,14 @@ export class StateManager extends EventEmitter {
     return this.db.getFileResults(runId);
   }
 
+  getFileResultsPaginated(
+    runId: string,
+    limit: number,
+    offset: number,
+  ): { files: FileResult[]; total: number } {
+    return this.db.getFileResultsPaginated(runId, limit, offset);
+  }
+
   appendLog(runId: string, logMessage: string): void {
     // Write to log file instead of database
     this.logFileManager.appendLog(runId, logMessage);
