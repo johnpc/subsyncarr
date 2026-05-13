@@ -6,7 +6,7 @@ export type SubtitleFormat = 'standard' | 'overwrite';
 
 export function getSubtitleFormat(): SubtitleFormat {
   const format = process.env.SUBTITLE_FORMAT || 'standard';
-  if (format === 'overwrite') return 'overwrite';
+  if (format === 'overwrite' || process.env.OVERWRITE_SUBTITLES === 'true') return 'overwrite';
   return 'standard';
 }
 
