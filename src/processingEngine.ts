@@ -353,6 +353,15 @@ export class ProcessingEngine extends EventEmitter {
               // Ignore cleanup errors
             }
           }
+          // Delete the original subtitle file — it doesn't fit the media
+          if (existsSync(srtPath)) {
+            try {
+              unlinkSync(srtPath);
+              this.log(`[${new Date().toISOString()}]   Deleted subtitle that doesn't fit media: ${fileName}`);
+            } catch {
+              this.log(`[${new Date().toISOString()}]   Failed to delete subtitle: ${fileName}`);
+            }
+          }
           this.emit('file:engine_completed', {
             srtPath,
             engine,
