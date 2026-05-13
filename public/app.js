@@ -438,7 +438,7 @@ class SubsyncarrPlusClient {
 
   renderFiles() {
     const processing = this.state.files.filter((f) => f.status === 'processing');
-    const completed = this.state.files.filter((f) => ['completed', 'skipped', 'error'].includes(f.status));
+    const completed = this.state.files.filter((f) => ['completed', 'skipped', 'error', 'not_fitting'].includes(f.status));
 
     // Render processing files
     const progressHtml = processing
@@ -467,9 +467,12 @@ class SubsyncarrPlusClient {
     const completedHtml = completed
       .map((file) => {
         const engines = JSON.parse(file.engines);
+        const statusLabel = file.status === 'not_fitting' ? '⚠ Not Fitting' :
+                           file.status === 'error' ? '✗ Error' :
+                           file.status === 'skipped' ? '⊘ Skipped' : '✓ Completed';
         return `
         <div class="file-card ${file.status}">
-          <div class="file-name">${this.basename(file.file_path)}</div>
+          <div class="file-name">${this.basename(file.file_path)} <span class="status-label">${statusLabel}</span></div>
           ${this.renderEngineResults(engines)}
         </div>
       `;
@@ -487,9 +490,17 @@ class SubsyncarrPlusClient {
         const className = result.success ? 'success' : 'error';
         const duration = (result.duration / 1000).toFixed(1);
 
+        let extra = '';
+        if (result.notFitting) {
+          extra = ' ⚠ Not fitting';
+        } else if (result.offsetMs !== undefined && result.offsetMs !== null) {
+          const offsetSec = (result.offsetMs / 1000).toFixed(1);
+          extra = ` (${offsetSec}s)`;
+        }
+
         return `
         <div class="engine-result ${className}">
-          <span>${icon} ${name}</span>
+          <span>${icon} ${name}${extra}</span>
           <span class="duration">${duration}s</span>
         </div>
       `;
@@ -559,6 +570,10 @@ class SubsyncarrPlusClient {
           run.failed > 0
             ? `<span class="stat-clickable stat-failed" onclick="client.showFileList('${run.id}', 'failed')">${run.failed}</span>`
             : run.failed;
+        const notFittingCell =
+          run.not_fitting > 0
+            ? `<span class="stat-clickable" style="color:#5b21b6" onclick="client.showFileList('${run.id}', 'not_fitting')">${run.not_fitting}</span>`
+            : run.not_fitting || 0;
 
         return `
         <tr>
@@ -568,6 +583,7 @@ class SubsyncarrPlusClient {
           <td>${completedCell}</td>
           <td>${skippedCell}</td>
           <td>${failedCell}</td>
+          <td>${notFittingCell}</td>
           ${this.renderEngineCell(engineStats.ffsubsync)}
           ${this.renderEngineCell(engineStats.autosubsync)}
           ${this.renderEngineCell(engineStats.alass)}
@@ -583,7 +599,7 @@ class SubsyncarrPlusClient {
       .join('');
 
     document.getElementById('historyBody').innerHTML =
-      html || '<tr><td colspan="11" class="no-data">No runs yet</td></tr>';
+      html || '<tr><td colspan="12" class="no-data">No runs yet</td></tr>';
   }
 
   basename(path) {
@@ -640,6 +656,10 @@ class SubsyncarrPlusClient {
       case 'failed':
         files = run.files.filter((f) => f.status === 'error');
         title = `Failed Files (${files.length})`;
+        break;
+      case 'not_fitting':
+        files = run.files.filter((f) => f.status === 'not_fitting');
+        title = `Not Fitting Files (${files.length})`;
         break;
       default:
         return;

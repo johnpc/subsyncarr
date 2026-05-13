@@ -42,6 +42,10 @@ export interface ProcessingResult {
   stdout?: string;
   stderr?: string;
   skipped?: boolean;
+  /** Offset in ms between original and synced subtitles (if calculated) */
+  offsetMs?: number;
+  /** True when the subtitle doesn't fit the media (offset too large even after retry) */
+  notFitting?: boolean;
 }
 
 function getTimeoutMs(): number {
