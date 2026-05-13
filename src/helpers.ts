@@ -1,4 +1,30 @@
 import { exec } from 'child_process';
+import { basename, dirname, join } from 'path';
+
+export type SubtitleFormat = 'standard' | 'engine-lang' | 'overwrite';
+
+export function getSubtitleFormat(): SubtitleFormat {
+  const format = process.env.SUBTITLE_FORMAT || 'standard';
+  if (format === 'engine-lang' || format === 'overwrite') return format;
+  return 'standard';
+}
+
+export function getOutputPath(srtPath: string, engine: string): string {
+  const directory = dirname(srtPath);
+  const srtBaseName = basename(srtPath, '.srt');
+  const format = getSubtitleFormat();
+
+  if (format === 'engine-lang') {
+    const match = srtBaseName.match(/\.([a-z]{2,3})(?:\.[a-z]+)*$/i);
+    if (match) {
+      const prefix = srtBaseName.slice(0, match.index);
+      const langPart = match[0];
+      return join(directory, `${prefix}.${engine}${langPart}.srt`);
+    }
+  }
+
+  return join(directory, `${srtBaseName}.${engine}.srt`);
+}
 
 export interface ProcessingResult {
   success: boolean;

@@ -1,16 +1,24 @@
 import { readdir } from 'fs/promises';
-import { basename, dirname, extname, join } from 'path';
+import { extname, join } from 'path';
 import { existsSync } from 'fs';
 import { ScanConfig } from './config';
+import { getOutputPath, getSubtitleFormat } from './helpers';
 
 function isAlreadySynced(srtPath: string, engines: string[]): boolean {
-  const directory = dirname(srtPath);
-  const srtBaseName = basename(srtPath, '.srt');
+  const format = getSubtitleFormat();
+  if (format === 'overwrite') return false; // Handled separately by DB check in engine
 
   return engines.every((engine) => {
-    const outputPath = join(directory, `${srtBaseName}.${engine}.srt`);
+    const outputPath = getOutputPath(srtPath, engine);
     return existsSync(outputPath);
   });
+}
+
+function isEngineOutput(filename: string, engines: string[]): boolean {
+  if (getSubtitleFormat() === 'engine-lang') {
+    return engines.some((engine) => filename.includes(`.${engine}.`));
+  }
+  return engines.some((engine) => filename.includes(`.${engine}.`));
 }
 
 export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
@@ -34,9 +42,7 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
       } else if (
         entry.isFile() &&
         extname(entry.name).toLowerCase() === '.srt' &&
-        !entry.name.includes('.ffsubsync.') &&
-        !entry.name.includes('.alass.') &&
-        !entry.name.includes('.autosubsync.')
+        !isEngineOutput(entry.name, engines)
       ) {
         if (isAlreadySynced(fullPath, engines)) {
           skippedCount++;

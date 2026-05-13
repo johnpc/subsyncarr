@@ -1,11 +1,8 @@
-import { basename, dirname, join } from 'path';
-import { execPromise, ProcessingResult } from './helpers';
+import { execPromise, ProcessingResult, getOutputPath } from './helpers';
 import { existsSync } from 'fs';
 
 export async function generateFfsubsyncSubtitles(srtPath: string, videoPath: string): Promise<ProcessingResult> {
-  const directory = dirname(srtPath);
-  const srtBaseName = basename(srtPath, '.srt');
-  const outputPath = join(directory, `${srtBaseName}.ffsubsync.srt`);
+  const outputPath = getOutputPath(srtPath, 'ffsubsync');
 
   // Check if synced subtitle already exists
   const exists = existsSync(outputPath);
