@@ -2,8 +2,8 @@ name: Build and Publish Docker Image
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - bridgemill-ch
 
 jobs:
   docker:
@@ -24,15 +24,38 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
+      - name: Determine next version
+        id: version
+        run: |
+          LATEST_TAG=$(git tag --sort=-version:refname | head -1)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "version=1.0.0" >> $GITHUB_OUTPUT
+          else
+            # Strip leading 'v' if present
+            CLEAN_TAG="${LATEST_TAG#v}"
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CLEAN_TAG"
+            # If patch isn't a number, restart at .0
+            if ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+              PATCH=0
+            fi
+            PATCH=$((PATCH + 1))
+            echo "version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: mrorbitman/subsyncarr
+          images: bridgemill/subsyncarr
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest
 
       - name: Set up QEMU
@@ -57,6 +80,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
       - name: Generate changelog
         id: changelog
         run: |
@@ -73,7 +97,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ github.ref_name }}
+          name: Release ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }}
           body: |
             ## What's Changed
             ${{ steps.changelog.outputs.changelog }}
@@ -82,11 +107,11 @@ jobs:
 
             Pull the image using:
             ```bash
-            docker pull mrorbitman/subsyncarr:${{ github.ref_name }}
+            docker pull bridgemill/subsyncarr:${{ steps.version.outputs.version }}
             # or
-            docker pull mrorbitman/subsyncarr:latest
+            docker pull bridgemill/subsyncarr:latest
             ```
 
-            Docker Hub URL: https://hub.docker.com/r/mrorbitman/subsyncarr/tags
+            Docker Hub URL: https://hub.docker.com/r/bridgemill/subsyncarr/tags
           draft: false
           prerelease: false
