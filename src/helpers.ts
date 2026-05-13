@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import { basename, dirname, join } from 'path';
-import { readFileSync, writeFileSync } from 'fs';
+import { openSync, readSync, closeSync, writeFileSync } from 'fs';
 
 export type SubtitleFormat = 'standard' | 'overwrite';
 
@@ -20,8 +20,11 @@ const SYNC_MARKER = '# synced:';
 
 export function isSyncedSrt(srtPath: string): boolean {
   try {
-    const content = readFileSync(srtPath, 'utf8');
-    return content.startsWith(SYNC_MARKER);
+    const fd = openSync(srtPath, 'r');
+    const buf = Buffer.alloc(100);
+    readSync(fd, buf, 0, 100, 0);
+    closeSync(fd);
+    return buf.toString('utf8').startsWith(SYNC_MARKER);
   } catch {
     return false;
   }
