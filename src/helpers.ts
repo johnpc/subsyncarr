@@ -1,29 +1,35 @@
 import { exec } from 'child_process';
 import { basename, dirname, join } from 'path';
+import { readFileSync, writeFileSync } from 'fs';
 
-export type SubtitleFormat = 'standard' | 'engine-lang' | 'overwrite';
+export type SubtitleFormat = 'standard' | 'overwrite';
 
 export function getSubtitleFormat(): SubtitleFormat {
   const format = process.env.SUBTITLE_FORMAT || 'standard';
-  if (format === 'engine-lang' || format === 'overwrite') return format;
+  if (format === 'overwrite') return 'overwrite';
   return 'standard';
 }
 
 export function getOutputPath(srtPath: string, engine: string): string {
   const directory = dirname(srtPath);
   const srtBaseName = basename(srtPath, '.srt');
-  const format = getSubtitleFormat();
-
-  if (format === 'engine-lang') {
-    const match = srtBaseName.match(/\.([a-z]{2,3})(?:\.[a-z]+)*$/i);
-    if (match) {
-      const prefix = srtBaseName.slice(0, match.index);
-      const langPart = match[0];
-      return join(directory, `${prefix}.${engine}${langPart}.srt`);
-    }
-  }
-
   return join(directory, `${srtBaseName}.${engine}.srt`);
+}
+
+const SYNC_MARKER = '# synced:';
+
+export function isSyncedSrt(srtPath: string): boolean {
+  try {
+    const content = readFileSync(srtPath, 'utf8');
+    return content.startsWith(SYNC_MARKER);
+  } catch {
+    return false;
+  }
+}
+
+export function markSrtAsSynced(srtPath: string, engine: string, content: string): void {
+  const marker = `${SYNC_MARKER}${engine} ${Date.now()}\n`;
+  writeFileSync(srtPath, marker + content, 'utf8');
 }
 
 export interface ProcessingResult {

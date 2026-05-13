@@ -2,11 +2,11 @@ import { readdir } from 'fs/promises';
 import { extname, join } from 'path';
 import { existsSync } from 'fs';
 import { ScanConfig } from './config';
-import { getOutputPath, getSubtitleFormat } from './helpers';
+import { getOutputPath, getSubtitleFormat, isSyncedSrt } from './helpers';
 
 function isAlreadySynced(srtPath: string, engines: string[]): boolean {
   const format = getSubtitleFormat();
-  if (format === 'overwrite') return false; // Handled separately by DB check in engine
+  if (format === 'overwrite') return isSyncedSrt(srtPath);
 
   return engines.every((engine) => {
     const outputPath = getOutputPath(srtPath, engine);

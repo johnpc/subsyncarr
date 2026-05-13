@@ -209,14 +209,6 @@ export class StateManager extends EventEmitter {
     return this.logFileManager.readLog(runId);
   }
 
-  isFileProcessed(filePath: string): boolean {
-    return this.db.isFileProcessed(filePath);
-  }
-
-  markFileProcessed(filePath: string, engine: string): void {
-    this.db.markFileProcessed(filePath, engine);
-  }
-
   getDatabase(): SubsyncarrPlusDatabase {
     return this.db;
   }
