@@ -6,8 +6,12 @@ import { generateFfsubsyncSubtitles } from './generateFfsubsyncSubtitles';
 import { generateAutosubsyncSubtitles } from './generateAutosubsyncSubtitles';
 import { generateAlassSubtitles } from './generateAlassSubtitles';
 import { StateManager } from './stateManager';
-import { copyFileSync, unlinkSync } from 'fs';
+import { copyFileSync, existsSync, renameSync, unlinkSync } from 'fs';
+import { readdir } from 'fs/promises';
+import { extname, join, basename as pathBasename } from 'path';
 import { getSubtitleFormat, getOutputPath } from './helpers';
+
+const ALL_KNOWN_ENGINES = ['ffsubsync', 'autosubsync', 'alass'];
 
 export class ProcessingEngine extends EventEmitter {
   private cancelledFiles: Set<string> = new Set();
@@ -53,6 +57,10 @@ export class ProcessingEngine extends EventEmitter {
     this.log(`[${new Date().toISOString()}] Scanning for subtitle files...`);
     this.log(`[${new Date().toISOString()}] Scan paths: ${JSON.stringify(scanConfig.includePaths)}`);
 
+    if (this.subtitleFormat !== 'standard') {
+      await this.normalizeEngineOutputs(scanConfig);
+    }
+
     const srtFiles = await findAllSrtFiles(scanConfig);
     this.log(`[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files`);
 
@@ -80,6 +88,52 @@ export class ProcessingEngine extends EventEmitter {
     }
 
     this.log(`[${new Date().toISOString()}] All files processed`);
+  }
+
+  private async normalizeEngineOutputs(config: ScanConfig): Promise<void> {
+    const renames: Array<{ current: string; target: string }> = [];
+
+    async function scan(directory: string): Promise<void> {
+      if (config.excludePaths.some((excludePath) => directory.startsWith(excludePath))) return;
+      const entries = await readdir(directory, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = join(directory, entry.name);
+        if (entry.isDirectory()) {
+          await scan(fullPath);
+        } else if (entry.isFile() && extname(entry.name).toLowerCase() === '.srt') {
+          for (const engine of ALL_KNOWN_ENGINES) {
+            const marker = `.${engine}.`;
+            if (entry.name.includes(marker)) {
+              const originalName = entry.name.replace(marker, '.');
+              const originalPath = join(directory, originalName);
+              if (existsSync(originalPath)) {
+                const expectedPath = getOutputPath(originalPath, engine);
+                if (fullPath !== expectedPath) {
+                  renames.push({ current: fullPath, target: expectedPath });
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    for (const includePath of config.includePaths) {
+      await scan(includePath);
+    }
+
+    if (renames.length > 0) {
+      this.log(`[${new Date().toISOString()}] Normalizing ${renames.length} engine output filenames to match SUBTITLE_FORMAT`);
+      for (const { current, target } of renames) {
+        try {
+          renameSync(current, target);
+          this.log(`[${new Date().toISOString()}]   Renamed: ${pathBasename(current)} → ${pathBasename(target)}`);
+        } catch (err) {
+          this.log(`[${new Date().toISOString()}]   Failed to rename ${pathBasename(current)}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    }
   }
 
   private async processFile(srtPath: string): Promise<void> {
