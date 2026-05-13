@@ -14,11 +14,10 @@ function isAlreadySynced(srtPath: string, engines: string[]): boolean {
   });
 }
 
-function isEngineOutput(filename: string, engines: string[]): boolean {
-  if (getSubtitleFormat() === 'engine-lang') {
-    return engines.some((engine) => filename.includes(`.${engine}.`));
-  }
-  return engines.some((engine) => filename.includes(`.${engine}.`));
+const ALL_KNOWN_ENGINES = ['ffsubsync', 'autosubsync', 'alass'];
+
+function isEngineOutput(filename: string): boolean {
+  return ALL_KNOWN_ENGINES.some((engine) => filename.includes(`.${engine}.`));
 }
 
 export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
@@ -42,7 +41,7 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
       } else if (
         entry.isFile() &&
         extname(entry.name).toLowerCase() === '.srt' &&
-        !isEngineOutput(entry.name, engines)
+        !isEngineOutput(entry.name)
       ) {
         if (isAlreadySynced(fullPath, engines)) {
           skippedCount++;
