@@ -294,6 +294,12 @@ export class SubsyncarrPlusDatabase {
       .all(runId) as FileResult[];
   }
 
+  getFileResult(runId: string, filePath: string): FileResult | null {
+    return this.db
+      .prepare('SELECT * FROM file_results WHERE run_id = ? AND file_path = ?')
+      .get(runId, filePath) as FileResult | null;
+  }
+
   // Processed files methods (for overwrite mode)
   isFileProcessed(filePath: string): boolean {
     const result = this.db.prepare('SELECT 1 FROM processed_files WHERE file_path = ?').get(filePath);

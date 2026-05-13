@@ -68,9 +68,11 @@ export class SubsyncarrPlusServer {
     this.app.get('/api/status', (req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/status`);
       const currentRun = this.stateManager.getCurrentRun();
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 1000, 5000);
+      const files = currentRun ? this.stateManager.getFileResults(currentRun.id).slice(-limit) : [];
       res.json({
         currentRun,
-        files: currentRun ? this.stateManager.getFileResults(currentRun.id) : [],
+        files,
         isRunning: this.coordinator.isRunning(),
       });
     });
@@ -197,9 +199,7 @@ export class SubsyncarrPlusServer {
         type: 'files:cleared',
         data: {
           currentRun,
-          files: currentRun
-            ? this.stateManager.getFileResults(currentRun.id).filter((f) => f.status === 'processing')
-            : [],
+          files: [],
         },
       });
 
@@ -244,14 +244,13 @@ export class SubsyncarrPlusServer {
       console.log(`[${new Date().toISOString()}] WebSocket client connected (total: ${this.clients.size + 1})`);
       this.clients.add(ws);
 
-      // Send initial state
+      // Send initial state (without file list to avoid OOM with large libraries)
       const currentRun = this.stateManager.getCurrentRun();
       ws.send(
         JSON.stringify({
           type: 'state',
           data: {
             currentRun,
-            files: currentRun ? this.stateManager.getFileResults(currentRun.id) : [],
             isRunning: this.coordinator.isRunning(),
           },
         }),
