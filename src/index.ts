@@ -6,8 +6,8 @@ async function main(): Promise<void> {
   try {
     // Find all .srt files
     const scanConfig = getScanConfig();
-    const srtFiles = await findAllSrtFiles(scanConfig);
-    console.log(`${new Date().toLocaleString()} Found ${srtFiles.length} SRT files`);
+    const { files: srtFiles, skippedCount } = await findAllSrtFiles(scanConfig);
+    console.log(`${new Date().toLocaleString()} Found ${srtFiles.length} SRT files (${skippedCount} already synced)`);
 
     const maxConcurrentSyncTasks = process.env.MAX_CONCURRENT_SYNC_TASKS
       ? parseInt(process.env.MAX_CONCURRENT_SYNC_TASKS)

@@ -29,8 +29,8 @@ export class ProcessingCoordinator {
       }
     });
 
-    this.engine.on('run:files_found', (files: string[]) => {
-      this.currentRunId = this.stateManager.startRun(files.length, this.enabledEngines);
+    this.engine.on('run:files_found', (files: string[], skippedCount: number) => {
+      this.currentRunId = this.stateManager.startRun(files.length, this.enabledEngines, skippedCount);
 
       // Add all files to database as pending (video matching happens during processing)
       for (const filePath of files) {

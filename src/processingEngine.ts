@@ -47,10 +47,10 @@ export class ProcessingEngine extends EventEmitter {
     this.log(`[${new Date().toISOString()}] Scanning for subtitle files...`);
     this.log(`[${new Date().toISOString()}] Scan paths: ${JSON.stringify(scanConfig.includePaths)}`);
 
-    const srtFiles = await findAllSrtFiles(scanConfig);
-    this.log(`[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files`);
+    const { files: srtFiles, skippedCount } = await findAllSrtFiles(scanConfig);
+    this.log(`[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files to process (${skippedCount} already synced)`);
 
-    this.emit('run:files_found', srtFiles);
+    this.emit('run:files_found', srtFiles, skippedCount);
 
     // Process in batches
     this.log(`[${new Date().toISOString()}] Processing with concurrency: ${this.maxConcurrent}`);
