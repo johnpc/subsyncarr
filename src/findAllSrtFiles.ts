@@ -13,6 +13,17 @@ function isAlreadySynced(srtPath: string, engines: string[]): boolean {
   });
 }
 
+function matchesLanguageFilter(fileName: string, languages: string[]): boolean {
+  if (languages.length === 0) return true;
+
+  // Extract language tag from filename like "movie.en.srt" or "movie.eng.srt"
+  const parts = basename(fileName, '.srt').split('.');
+  if (parts.length < 2) return false;
+
+  const langTag = parts[parts.length - 1].toLowerCase();
+  return languages.some((lang) => lang.toLowerCase() === langTag);
+}
+
 export interface ScanResult {
   files: string[];
   skippedCount: number;
@@ -20,8 +31,13 @@ export interface ScanResult {
 
 export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
   const engines = process.env.INCLUDE_ENGINES?.split(',') || ['ffsubsync', 'autosubsync', 'alass'];
+  const languages = process.env.SYNC_LANGUAGES?.split(',').map((l) => l.trim()).filter(Boolean) || [];
   const files: string[] = [];
   let skippedCount = 0;
+
+  if (languages.length > 0) {
+    console.log(`${new Date().toLocaleString()} Language filter active: ${languages.join(', ')}`);
+  }
 
   async function scan(directory: string): Promise<void> {
     // Check if this directory should be excluded
@@ -41,7 +57,8 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
         extname(entry.name).toLowerCase() === '.srt' &&
         !entry.name.includes('.ffsubsync.') &&
         !entry.name.includes('.alass.') &&
-        !entry.name.includes('.autosubsync.')
+        !entry.name.includes('.autosubsync.') &&
+        matchesLanguageFilter(entry.name, languages)
       ) {
         if (isAlreadySynced(fullPath, engines)) {
           skippedCount++;
