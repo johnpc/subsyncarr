@@ -101,6 +101,7 @@ docker run -d \
 | --------------------------- | ----------------------------- | -------------------------------------------------------------------------------- |
 | `SCAN_PATHS`                | `/scan_dir`                   | Comma-separated directories to scan for SRT files (must be mounted as volumes)   |
 | `EXCLUDE_PATHS`             | _(none)_                      | Comma-separated directories to exclude from scanning                             |
+| `SYNC_LANGUAGES`            | _(none)_                      | Comma-separated language codes to sync (e.g., `en,de`). Only syncs subtitles with matching language tags in the filename (e.g., `movie.en.srt`). If not set, all subtitles are synced. |
 | `CRON_SCHEDULE`             | `0 0 * * *`                   | Cron expression for sync schedule (daily at midnight), or `disabled` to turn off |
 | `MAX_CONCURRENT_SYNC_TASKS` | `1`                           | Number of subtitle files to process in parallel (higher = faster but more CPU)   |
 | `INCLUDE_ENGINES`           | `ffsubsync,autosubsync,alass` | Which sync engines to use (comma-separated)                                      |
