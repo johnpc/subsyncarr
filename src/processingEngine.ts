@@ -6,6 +6,8 @@ import { generateFfsubsyncSubtitles } from './generateFfsubsyncSubtitles';
 import { generateAutosubsyncSubtitles } from './generateAutosubsyncSubtitles';
 import { generateAlassSubtitles } from './generateAlassSubtitles';
 import { StateManager } from './stateManager';
+import { readFileSync, unlinkSync } from 'fs';
+import { getSubtitleFormat, getOutputPath, markSrtAsSynced, isSyncedSrt } from './helpers';
 
 export class ProcessingEngine extends EventEmitter {
   private cancelledFiles: Set<string> = new Set();
@@ -20,6 +22,10 @@ export class ProcessingEngine extends EventEmitter {
     this.maxConcurrent = parseInt(process.env.MAX_CONCURRENT_SYNC_TASKS || '1', 10);
     this.enabledEngines = process.env.INCLUDE_ENGINES?.split(',') || ['ffsubsync', 'autosubsync', 'alass'];
     this.maxLogBufferSize = parseInt(process.env.LOG_BUFFER_SIZE || '1000', 10);
+  }
+
+  private get subtitleFormat(): string {
+    return getSubtitleFormat();
   }
 
   private log(message: string): void {
@@ -49,7 +55,6 @@ export class ProcessingEngine extends EventEmitter {
 
     const srtFiles = await findAllSrtFiles(scanConfig);
     this.log(`[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files`);
-
     this.emit('run:files_found', srtFiles);
 
     // Process in batches
@@ -69,7 +74,13 @@ export class ProcessingEngine extends EventEmitter {
 
   private async processFile(srtPath: string): Promise<void> {
     const fileName = srtPath.split('/').pop();
-    this.log(`[${new Date().toISOString()}] Processing: ${fileName}`);
+
+    // Skip already-synced files (overwrite mode)
+    if (this.subtitleFormat === 'overwrite' && (await isSyncedSrt(srtPath))) {
+      this.log(`[${new Date().toISOString()}] ⊘ Already synced (header): ${fileName}`);
+      this.emit('file:skipped', { srtPath, reason: 'already_synced' });
+      return;
+    }
 
     // Check if cancelled
     if (this.cancelledFiles.has(srtPath)) {
@@ -168,6 +179,20 @@ export class ProcessingEngine extends EventEmitter {
 
         if (result.success) {
           anyEngineSucceeded = true;
+
+          if (this.subtitleFormat === 'overwrite') {
+            const engineOutputPath = getOutputPath(srtPath, engine);
+            const engineContent = readFileSync(engineOutputPath, 'utf8');
+            markSrtAsSynced(srtPath, engine, engineContent);
+            unlinkSync(engineOutputPath);
+            this.log(`[${new Date().toISOString()}] ✓ Synced (header-marked): ${fileName}`);
+            this.emit('file:engine_completed', {
+              srtPath,
+              engine,
+              result: { ...result, duration },
+            });
+            break;
+          }
         }
 
         this.emit('file:engine_completed', {

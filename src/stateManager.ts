@@ -158,8 +158,7 @@ export class StateManager extends EventEmitter {
   }
 
   private emitFileUpdate(runId: string, filePath: string): void {
-    const files = this.db.getFileResults(runId);
-    const file = files.find((f) => f.file_path === filePath);
+    const file = this.db.getFileResult(runId, filePath);
     if (file) {
       const run = this.db.getRun(runId);
       this.emit('file:updated', { file, run });
@@ -190,6 +189,14 @@ export class StateManager extends EventEmitter {
 
   getFileResults(runId: string): FileResult[] {
     return this.db.getFileResults(runId);
+  }
+
+  getFileResultsPaginated(
+    runId: string,
+    limit: number,
+    offset: number,
+  ): { files: FileResult[]; total: number } {
+    return this.db.getFileResultsPaginated(runId, limit, offset);
   }
 
   appendLog(runId: string, logMessage: string): void {
