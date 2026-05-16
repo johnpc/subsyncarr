@@ -32,7 +32,6 @@ services:
   subsyncarr:
     image: mrorbitman/subsyncarr:latest
     container_name: subsyncarr
-    user: '1000:10'
     ports:
       - '3000:3000' # Web UI
     volumes:
@@ -81,7 +80,6 @@ Open your browser to [http://localhost:3000](http://localhost:3000) or whatever 
 ```bash
 docker run -d \
   --name subsyncarr \
-  --user 1000:10 \
   -p 3000:3000 \
   -v /path/to/movies:/movies \
   -v /path/to/tv:/tv \
@@ -259,6 +257,8 @@ id -g  # Get your group ID
 ```
 
 Then update your docker-compose.yaml with these values.
+
+> **Note:** Do not use the `user:` directive in docker-compose or `--user` in docker run. The container must start as root so the entrypoint can configure file permissions using `PUID`/`PGID`, then drops to the unprivileged user automatically via `gosu`.
 
 ### Memory Issues
 
