@@ -3,6 +3,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import { ProcessingCoordinator } from './coordinator';
 import { StateManager } from './stateManager';
+import { Run } from './database';
 import { join } from 'path';
 import { getScanConfig } from './config';
 import cronstrue from 'cronstrue';
@@ -68,9 +69,12 @@ export class SubsyncarrPlusServer {
     this.app.get('/api/status', (req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/status`);
       const currentRun = this.stateManager.getCurrentRun();
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 500, 5000);
+      const result = currentRun ? this.stateManager.getFileResultsPaginated(currentRun.id, limit, 0) : null;
       res.json({
         currentRun,
-        files: currentRun ? this.stateManager.getFileResults(currentRun.id) : [],
+        files: result?.files || [],
+        totalFiles: result?.total || 0,
         isRunning: this.coordinator.isRunning(),
       });
     });
@@ -82,31 +86,55 @@ export class SubsyncarrPlusServer {
       res.json(this.stateManager.getRunHistory(limit));
     });
 
-    // Get specific run details
+    // Get specific run details (latest files only — use paginated endpoint for full list)
     this.app.get('/api/runs/:id', (req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/runs/${req.params.id}`);
       const currentRun = this.stateManager.getCurrentRun();
       const requestedId = req.params.id;
 
-      // Check current run first
+      let run: Run | null = null;
       if (currentRun && currentRun.id === requestedId) {
-        return res.json({
-          run: currentRun,
-          files: this.stateManager.getFileResults(currentRun.id),
-        });
+        run = currentRun;
+      } else {
+        const history = this.stateManager.getRunHistory(1000);
+        run = history.find((r) => r.id === requestedId) || null;
       }
-
-      // Check history
-      const history = this.stateManager.getRunHistory(1000);
-      const run = history.find((r) => r.id === requestedId);
 
       if (!run) {
         return res.status(404).json({ error: 'Run not found' });
       }
 
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 500, 5000);
+      const result = this.stateManager.getFileResultsPaginated(requestedId, limit, 0);
       res.json({
         run,
-        files: this.stateManager.getFileResults(run.id),
+        files: result.files,
+        totalFiles: result.total,
+      });
+    });
+
+    // Get paginated file results for a run
+    this.app.get('/api/runs/:id/files', (req, res) => {
+      console.log(`[${new Date().toISOString()}] GET /api/runs/${req.params.id}/files`);
+      const requestedId = req.params.id;
+      const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 500, 5000);
+      const offset = (page - 1) * limit;
+
+      const currentRun = this.stateManager.getCurrentRun();
+      const history = this.stateManager.getRunHistory(1000);
+      const run = currentRun?.id === requestedId ? currentRun : history.find((r) => r.id === requestedId);
+
+      if (!run) {
+        return res.status(404).json({ error: 'Run not found' });
+      }
+
+      const result = this.stateManager.getFileResultsPaginated(requestedId, limit, offset);
+      res.json({
+        ...result,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
       });
     });
 
@@ -197,9 +225,7 @@ export class SubsyncarrPlusServer {
         type: 'files:cleared',
         data: {
           currentRun,
-          files: currentRun
-            ? this.stateManager.getFileResults(currentRun.id).filter((f) => f.status === 'processing')
-            : [],
+          files: [],
         },
       });
 
@@ -244,14 +270,13 @@ export class SubsyncarrPlusServer {
       console.log(`[${new Date().toISOString()}] WebSocket client connected (total: ${this.clients.size + 1})`);
       this.clients.add(ws);
 
-      // Send initial state
+      // Send initial state (without file list to avoid OOM with large libraries)
       const currentRun = this.stateManager.getCurrentRun();
       ws.send(
         JSON.stringify({
           type: 'state',
           data: {
             currentRun,
-            files: currentRun ? this.stateManager.getFileResults(currentRun.id) : [],
             isRunning: this.coordinator.isRunning(),
           },
         }),

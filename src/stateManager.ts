@@ -88,7 +88,7 @@ export class StateManager extends EventEmitter {
     this.emit('run:cancelled', run);
   }
 
-  incrementRunCounter(runId: string, field: 'completed' | 'skipped' | 'failed'): void {
+  incrementRunCounter(runId: string, field: 'completed' | 'skipped' | 'failed' | 'not_fitting'): void {
     const run = this.db.getRun(runId)!;
     this.db.updateRun(runId, {
       [field]: run[field] + 1,
@@ -131,6 +131,8 @@ export class StateManager extends EventEmitter {
       stdout?: string;
       stderr?: string;
       skipped?: boolean;
+      offsetMs?: number;
+      notFitting?: boolean;
     },
   ): void {
     const files = this.db.getFileResults(runId);
@@ -158,8 +160,7 @@ export class StateManager extends EventEmitter {
   }
 
   private emitFileUpdate(runId: string, filePath: string): void {
-    const files = this.db.getFileResults(runId);
-    const file = files.find((f) => f.file_path === filePath);
+    const file = this.db.getFileResult(runId, filePath);
     if (file) {
       const run = this.db.getRun(runId);
       this.emit('file:updated', { file, run });
@@ -173,7 +174,7 @@ export class StateManager extends EventEmitter {
 
     const files = this.db.getFileResults(this.currentRunId);
     files.forEach((file) => {
-      if (['completed', 'skipped', 'error'].includes(file.status)) {
+      if (['completed', 'skipped', 'error', 'not_fitting'].includes(file.status)) {
         this.emit('file:cleared', file);
       }
     });
@@ -190,6 +191,14 @@ export class StateManager extends EventEmitter {
 
   getFileResults(runId: string): FileResult[] {
     return this.db.getFileResults(runId);
+  }
+
+  getFileResultsPaginated(
+    runId: string,
+    limit: number,
+    offset: number,
+  ): { files: FileResult[]; total: number } {
+    return this.db.getFileResultsPaginated(runId, limit, offset);
   }
 
   appendLog(runId: string, logMessage: string): void {

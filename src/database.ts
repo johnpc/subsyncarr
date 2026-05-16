@@ -10,6 +10,7 @@ export interface Run {
   completed: number;
   skipped: number;
   failed: number;
+  not_fitting: number;
   total_engines: number;
   completed_engines: number;
   status: 'running' | 'completed' | 'cancelled';
@@ -21,7 +22,7 @@ export interface FileResult {
   run_id: string;
   file_path: string;
   video_path: string | null;
-  status: 'pending' | 'processing' | 'completed' | 'skipped' | 'error';
+  status: 'pending' | 'processing' | 'completed' | 'skipped' | 'error' | 'not_fitting';
   current_engine: string | null;
   engines: string; // JSON stringified { ffsubsync?: {...}, autosubsync?: {...}, alass?: {...} }
   created_at: number;
@@ -81,6 +82,7 @@ export class SubsyncarrPlusDatabase {
         completed INTEGER DEFAULT 0,
         skipped INTEGER DEFAULT 0,
         failed INTEGER DEFAULT 0,
+        not_fitting INTEGER DEFAULT 0,
         total_engines INTEGER DEFAULT 0,
         completed_engines INTEGER DEFAULT 0,
         status TEXT NOT NULL,
@@ -121,6 +123,12 @@ export class SubsyncarrPlusDatabase {
     const hasCompletedEnginesColumn = columns.some((col) => col.name === 'completed_engines');
     if (!hasCompletedEnginesColumn) {
       this.db.exec(`ALTER TABLE runs ADD COLUMN completed_engines INTEGER DEFAULT 0`);
+    }
+
+    // Migration: Add not_fitting column if it doesn't exist
+    const hasNotFittingColumn = columns.some((col) => col.name === 'not_fitting');
+    if (!hasNotFittingColumn) {
+      this.db.exec(`ALTER TABLE runs ADD COLUMN not_fitting INTEGER DEFAULT 0`);
     }
 
     // Migration: Create engine_failure_tracking table
@@ -278,6 +286,22 @@ export class SubsyncarrPlusDatabase {
     `,
       )
       .all(runId) as FileResult[];
+  }
+
+  getFileResult(runId: string, filePath: string): FileResult | null {
+    return this.db
+      .prepare('SELECT * FROM file_results WHERE run_id = ? AND file_path = ?')
+      .get(runId, filePath) as FileResult | null;
+  }
+
+  getFileResultsPaginated(runId: string, limit: number, offset: number): { files: FileResult[]; total: number } {
+    const total = (
+      this.db.prepare('SELECT COUNT(*) as count FROM file_results WHERE run_id = ?').get(runId) as { count: number }
+    ).count;
+    const files = this.db
+      .prepare('SELECT * FROM file_results WHERE run_id = ? ORDER BY created_at ASC LIMIT ? OFFSET ?')
+      .all(runId, limit, offset) as FileResult[];
+    return { files, total };
   }
 
   // Engine failure tracking methods

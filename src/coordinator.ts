@@ -66,6 +66,8 @@ export class ProcessingCoordinator {
           stdout?: string;
           stderr?: string;
           skipped?: boolean;
+          offsetMs?: number;
+          notFitting?: boolean;
         };
       }) => {
         if (this.currentRunId) {
@@ -102,6 +104,16 @@ export class ProcessingCoordinator {
         this.stateManager.incrementRunCounter(this.currentRunId, 'failed');
       }
     });
+
+    this.engine.on(
+      'file:not_fitting',
+      ({ srtPath }: { srtPath: string; engine: string; offsetMs: number }) => {
+        if (this.currentRunId) {
+          this.stateManager.updateFileStatus(this.currentRunId, srtPath, 'not_fitting', null);
+          this.stateManager.incrementRunCounter(this.currentRunId, 'not_fitting');
+        }
+      },
+    );
   }
 
   async startRun(config?: ScanConfig): Promise<string> {

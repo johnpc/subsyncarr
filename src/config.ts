@@ -3,6 +3,22 @@ export interface ScanConfig {
   excludePaths: string[];
 }
 
+export interface SyncRetryConfig {
+  /** Offset threshold in ms that triggers a retry (default: 5000 = 5 seconds) */
+  thresholdMs: number;
+  /** Maximum number of retry attempts after the first sync (default: 1) */
+  maxRetries: number;
+}
+
+export function getSyncRetryConfig(): SyncRetryConfig {
+  const thresholdMs = parseInt(process.env.SYNC_RETRY_THRESHOLD_MS || '5000', 10);
+  const maxRetries = parseInt(process.env.SYNC_MAX_RETRIES || '1', 10);
+  return {
+    thresholdMs: isNaN(thresholdMs) || thresholdMs <= 0 ? 5000 : thresholdMs,
+    maxRetries: isNaN(maxRetries) || maxRetries < 0 ? 1 : maxRetries,
+  };
+}
+
 export interface RetentionConfig {
   keepRunsDays: number; // Keep complete runs for N days
   trimLogsDays: number; // Trim logs after N days

@@ -281,6 +281,17 @@ h2 {
   border-left-color: var(--warning);
 }
 
+.file-card.not_fitting {
+  border-left-color: #8b5cf6;
+}
+
+.status-label {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.8;
+  margin-left: 8px;
+}
+
 .file-header {
   display: flex;
   justify-content: space-between;
@@ -368,6 +379,11 @@ td {
 .status-badge.cancelled {
   background: #fef3c7;
   color: #92400e;
+}
+
+.status-badge.not_fitting {
+  background: #ede9fe;
+  color: #5b21b6;
 }
 
 .no-data {
