@@ -13,7 +13,12 @@ function isAlreadySynced(srtPath: string, engines: string[]): boolean {
   });
 }
 
-export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
+export interface ScanResult {
+  files: string[];
+  skippedCount: number;
+}
+
+export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
   const engines = process.env.INCLUDE_ENGINES?.split(',') || ['ffsubsync', 'autosubsync', 'alass'];
   const files: string[] = [];
   let skippedCount = 0;
@@ -56,5 +61,5 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<string[]> {
     console.log(`${new Date().toLocaleString()} Skipped ${skippedCount} already-synced SRT files`);
   }
 
-  return files;
+  return { files, skippedCount };
 }
