@@ -430,16 +430,205 @@ td {
   color: var(--text);
 }
 
-#customPaths {
-  width: 100%;
-  min-height: 120px;
-  padding: 12px;
+/* Folder picker modal */
+.modal-content.picker-modal {
+  max-width: 760px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.picker-body {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 320px;
+  max-height: 55vh;
+  margin-bottom: 16px;
+}
+
+.picker-tree {
+  flex: 1.4;
+  overflow: auto;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-family: monospace;
+  padding: 8px;
+  background: var(--background);
   font-size: 14px;
-  margin-bottom: 16px;
-  resize: vertical;
+}
+
+.picker-selected {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.picker-selected-header {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.picker-empty {
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 12px;
+  background: var(--background);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.tree-node {
+  user-select: none;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tree-row:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.tree-chevron {
+  display: inline-block;
+  width: 12px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.tree-icon {
+  display: inline-block;
+  width: 16px;
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tree-name {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-row-file {
+  cursor: default;
+}
+
+.tree-row-file:hover {
+  background: transparent;
+}
+
+.tree-row-file .tree-name {
+  color: var(--text-secondary);
+}
+
+.tree-add {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tree-row:hover .tree-add {
+  opacity: 1;
+}
+
+.tree-add:hover {
+  background: var(--primary-dark);
+}
+
+.tree-loading,
+.tree-empty,
+.tree-error {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 4px;
+}
+
+.tree-error {
+  color: var(--error);
+}
+
+.selected-paths {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  flex: 1;
+}
+
+.selected-paths li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--background);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  position: relative;
+}
+
+.selected-path-text {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  min-width: 0;
+}
+
+/* On hover, expand the chip inline to show the full path. Avoids a
+   floating tooltip getting clipped by the parent's overflow:auto. */
+.selected-paths li:hover .selected-path-text {
+  white-space: normal;
+  word-break: break-all;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.selected-paths li:hover {
+  background: var(--border);
+}
+
+.selected-path-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.selected-path-remove:hover {
+  background: var(--error);
+  color: white;
 }
 
 .modal-actions {

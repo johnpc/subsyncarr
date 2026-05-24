@@ -103,12 +103,19 @@
     </div>
 
     <div id="customPathModal" class="modal hidden">
-      <div class="modal-content">
+      <div class="modal-content picker-modal">
         <div class="modal-header">
           <h3>Scan Specific Paths</h3>
           <button id="closeModal" class="btn-close">&times;</button>
         </div>
-        <textarea id="customPaths" placeholder="/path/to/directory1&#10;/path/to/directory2"></textarea>
+        <div class="picker-body">
+          <div class="picker-tree" id="folderTree"></div>
+          <div class="picker-selected">
+            <div class="picker-selected-header">Selected Paths</div>
+            <ul id="selectedPaths" class="selected-paths"></ul>
+            <div id="selectedPathsEmpty" class="picker-empty">Click <strong>+</strong> next to a folder to add it.</div>
+          </div>
+        </div>
         <div class="modal-actions">
           <button id="cancelCustom" class="btn btn-secondary">Cancel</button>
           <button id="submitCustom" class="btn btn-primary">Start Scan</button>

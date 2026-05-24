@@ -20,3 +20,10 @@ testlogs
 data/logs/
 *.db-shm
 *.db-wal
+
+# JetBrains IDE
+.idea/
+
+# Claude Code local overrides
+CLAUDE.local.md
+.claude/CLAUDE.local.md

@@ -4,6 +4,7 @@ class SubsyncarrPlusClient {
     this.state = { currentRun: null, files: [], isRunning: false };
     this.reconnectInterval = 3000;
     this.historyCache = {}; // Cache run data for file lookups
+    this.selectedPaths = [];
 
     this.initWebSocket();
     this.setupEventHandlers();
@@ -202,8 +203,7 @@ class SubsyncarrPlusClient {
     });
 
     document.getElementById('startCustom').addEventListener('click', () => {
-      document.getElementById('customPathModal').classList.remove('hidden');
-      document.getElementById('customPaths').value = ''; // Clear previous input
+      this.openPicker();
     });
 
     document.getElementById('stopRun').addEventListener('click', () => {
@@ -211,33 +211,27 @@ class SubsyncarrPlusClient {
     });
 
     document.getElementById('closeModal').addEventListener('click', () => {
-      console.log('Close button clicked');
-      document.getElementById('customPathModal').classList.add('hidden');
-      document.getElementById('customPaths').value = '';
+      this.closePicker();
     });
 
     document.getElementById('cancelCustom').addEventListener('click', () => {
-      document.getElementById('customPathModal').classList.add('hidden');
-      document.getElementById('customPaths').value = '';
+      this.closePicker();
     });
 
     document.getElementById('submitCustom').addEventListener('click', () => {
-      const paths = document
-        .getElementById('customPaths')
-        .value.split('\n')
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0);
-
-      document.getElementById('customPathModal').classList.add('hidden');
-      document.getElementById('customPaths').value = '';
+      if (this.selectedPaths.length === 0) {
+        alert('Add at least one path before starting a scan.');
+        return;
+      }
+      const paths = this.selectedPaths.slice();
+      this.closePicker();
       this.startRun(paths);
     });
 
     // Close modal when clicking outside
     document.getElementById('customPathModal').addEventListener('click', (e) => {
       if (e.target.id === 'customPathModal') {
-        document.getElementById('customPathModal').classList.add('hidden');
-        document.getElementById('customPaths').value = '';
+        this.closePicker();
       }
     });
 
@@ -312,6 +306,173 @@ class SubsyncarrPlusClient {
         document.getElementById('fileListModal').classList.add('hidden');
       }
     });
+  }
+
+  async openPicker() {
+    this.selectedPaths = [];
+    this.renderSelectedPaths();
+    const tree = document.getElementById('folderTree');
+    tree.innerHTML = '<div class="tree-loading">Loading…</div>';
+    document.getElementById('customPathModal').classList.remove('hidden');
+    try {
+      const data = await this.fetchBrowse(null);
+      tree.innerHTML = '';
+      if (data.entries.length === 0) {
+        tree.innerHTML = '<div class="tree-empty">No paths configured. Set SCAN_PATHS env var.</div>';
+        return;
+      }
+      data.entries.forEach((entry) => tree.appendChild(this.makeTreeRow(entry, 0)));
+    } catch (err) {
+      tree.innerHTML = `<div class="tree-error">Failed to load: ${this.escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  closePicker() {
+    document.getElementById('customPathModal').classList.add('hidden');
+  }
+
+  async fetchBrowse(path) {
+    const url = path ? `/api/browse?path=${encodeURIComponent(path)}` : '/api/browse';
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  }
+
+  makeTreeRow(entry, depth) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tree-node';
+
+    const isFile = entry.isDir === false;
+
+    const row = document.createElement('div');
+    row.className = isFile ? 'tree-row tree-row-file' : 'tree-row';
+    row.style.paddingLeft = `${depth * 16}px`;
+
+    const chevron = document.createElement('span');
+    chevron.className = 'tree-chevron';
+    chevron.textContent = isFile ? '' : '▶';
+
+    const icon = document.createElement('span');
+    icon.className = 'tree-icon';
+    icon.textContent = isFile ? '📄' : '📁';
+
+    const name = document.createElement('span');
+    name.className = 'tree-name';
+    name.textContent = entry.name;
+    name.title = entry.path;
+
+    row.appendChild(chevron);
+    row.appendChild(icon);
+    row.appendChild(name);
+
+    if (isFile) {
+      // Files are display-only — no expand, no add.
+      wrapper.appendChild(row);
+      return wrapper;
+    }
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'tree-add';
+    addBtn.textContent = '+';
+    addBtn.title = 'Add this path';
+    addBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.addSelectedPath(entry.path);
+    });
+    row.appendChild(addBtn);
+
+    const children = document.createElement('div');
+    children.className = 'tree-children hidden';
+    let loaded = false;
+
+    const toggle = async () => {
+      if (!loaded) {
+        loaded = true;
+        children.innerHTML = '<div class="tree-loading" style="padding-left:' + (depth + 1) * 16 + 'px">Loading…</div>';
+        children.classList.remove('hidden');
+        chevron.textContent = '▼';
+        try {
+          const data = await this.fetchBrowse(entry.path);
+          children.innerHTML = '';
+          if (data.entries.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'tree-empty';
+            empty.style.paddingLeft = `${(depth + 1) * 16}px`;
+            empty.textContent = '(empty)';
+            children.appendChild(empty);
+          } else {
+            data.entries.forEach((child) => children.appendChild(this.makeTreeRow(child, depth + 1)));
+          }
+        } catch (err) {
+          children.innerHTML = '';
+          const errEl = document.createElement('div');
+          errEl.className = 'tree-error';
+          errEl.style.paddingLeft = `${(depth + 1) * 16}px`;
+          errEl.textContent = `Failed to load: ${err.message}`;
+          children.appendChild(errEl);
+        }
+        return;
+      }
+      const willOpen = children.classList.contains('hidden');
+      children.classList.toggle('hidden');
+      chevron.textContent = willOpen ? '▼' : '▶';
+    };
+
+    chevron.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggle();
+    });
+    name.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggle();
+    });
+
+    wrapper.appendChild(row);
+    wrapper.appendChild(children);
+    return wrapper;
+  }
+
+  addSelectedPath(path) {
+    if (this.selectedPaths.includes(path)) return;
+    this.selectedPaths.push(path);
+    this.renderSelectedPaths();
+  }
+
+  removeSelectedPath(path) {
+    this.selectedPaths = this.selectedPaths.filter((p) => p !== path);
+    this.renderSelectedPaths();
+  }
+
+  renderSelectedPaths() {
+    const list = document.getElementById('selectedPaths');
+    const empty = document.getElementById('selectedPathsEmpty');
+    list.innerHTML = '';
+    if (this.selectedPaths.length === 0) {
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    this.selectedPaths.forEach((path) => {
+      const li = document.createElement('li');
+      li.dataset.fullpath = path;
+      li.title = path;
+      const span = document.createElement('span');
+      span.className = 'selected-path-text';
+      span.textContent = path;
+      const btn = document.createElement('button');
+      btn.className = 'selected-path-remove';
+      btn.textContent = '×';
+      btn.title = 'Remove';
+      btn.addEventListener('click', () => this.removeSelectedPath(path));
+      li.appendChild(span);
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }
+
+  escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   }
 
   async startRun(paths = null) {

@@ -3,7 +3,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import { ProcessingCoordinator } from './coordinator';
 import { StateManager } from './stateManager';
-import { join } from 'path';
+import { join, resolve as resolvePath } from 'path';
+import * as fs from 'fs';
 import { getScanConfig } from './config';
 import cronstrue from 'cronstrue';
 import parseExpression from 'cron-parser';
@@ -62,6 +63,66 @@ export class SubsyncarrPlusServer {
           nextRun: nextRun,
         },
       });
+    });
+
+    // Browse directories within the configured SCAN_PATHS.
+    // No `path` query → returns the configured roots as virtual top-level entries.
+    // Otherwise enumerates immediate subdirectories of `path`, but only if `path`
+    // resolves inside one of the configured roots.
+    this.app.get('/api/browse', (req, res) => {
+      const requestedPath = typeof req.query.path === 'string' ? req.query.path : '';
+      console.log(`[${new Date().toISOString()}] GET /api/browse${requestedPath ? ` path=${requestedPath}` : ''}`);
+
+      const roots = getScanConfig().includePaths;
+
+      if (!requestedPath) {
+        const entries = roots.map((p) => ({ name: p, path: p, isRoot: true }));
+        return res.json({ path: null, entries });
+      }
+
+      // Normalize the requested path lexically (strip trailing slash, resolve `.`/`..`)
+      // without following symlinks — this is what we return so paths shown to the user
+      // match what they clicked. We separately follow symlinks for the security check.
+      const normalizedRequest = resolvePath(requestedPath);
+
+      let resolvedPath: string;
+      try {
+        resolvedPath = fs.realpathSync(normalizedRequest);
+      } catch (err: unknown) {
+        const code = (err as { code?: string }).code;
+        if (code === 'ENOENT') return res.status(404).json({ error: 'path does not exist' });
+        if (code === 'EACCES') return res.status(403).json({ error: 'permission denied' });
+        return res.status(500).json({ error: (err as Error).message });
+      }
+
+      const isAllowed = roots.some((root) => {
+        let r: string;
+        try {
+          r = fs.realpathSync(resolvePath(root));
+        } catch {
+          return false;
+        }
+        return resolvedPath === r || resolvedPath.startsWith(r + '/');
+      });
+      if (!isAllowed) {
+        return res.status(403).json({ error: 'path outside SCAN_PATHS' });
+      }
+
+      try {
+        const entries = fs
+          .readdirSync(resolvedPath, { withFileTypes: true })
+          .filter((d) => !d.name.startsWith('.') && (d.isDirectory() || d.isFile()))
+          .map((d) => ({ name: d.name, path: join(normalizedRequest, d.name), isDir: d.isDirectory() }))
+          .sort((a, b) => {
+            if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+            return a.name.localeCompare(b.name);
+          });
+        return res.json({ path: normalizedRequest, entries });
+      } catch (err: unknown) {
+        const code = (err as { code?: string }).code;
+        if (code === 'EACCES') return res.status(403).json({ error: 'permission denied' });
+        return res.status(500).json({ error: (err as Error).message });
+      }
     });
 
     // Get current status
