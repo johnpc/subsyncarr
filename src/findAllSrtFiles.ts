@@ -1,14 +1,15 @@
 import { readdir } from 'fs/promises';
-import { basename, dirname, extname, join } from 'path';
+import { basename, extname, join } from 'path';
 import { existsSync } from 'fs';
-import { ScanConfig } from './config';
+import { getSuffixConfig, ScanConfig } from './config';
+import { buildOutputPath } from './helpers';
 
 function isAlreadySynced(srtPath: string, engines: string[]): boolean {
-  const directory = dirname(srtPath);
-  const srtBaseName = basename(srtPath, '.srt');
+  const suffixConfig = getSuffixConfig();
 
   return engines.every((engine) => {
-    const outputPath = join(directory, `${srtBaseName}.${engine}.srt`);
+    const suffix = suffixConfig[engine as keyof typeof suffixConfig] || engine;
+    const outputPath = buildOutputPath(srtPath, suffix);
     return existsSync(outputPath);
   });
 }
@@ -39,6 +40,11 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
     console.log(`${new Date().toLocaleString()} Language filter active: ${languages.join(', ')}`);
   }
 
+  const suffixConfig = getSuffixConfig();
+  const syncedSuffixes = engines.map(
+    (engine) => `.${suffixConfig[engine as keyof typeof suffixConfig] || engine}.`,
+  );
+
   async function scan(directory: string): Promise<void> {
     // Check if this directory should be excluded
     if (config.excludePaths.some((excludePath) => directory.startsWith(excludePath))) {
@@ -55,9 +61,7 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
       } else if (
         entry.isFile() &&
         extname(entry.name).toLowerCase() === '.srt' &&
-        !entry.name.includes('.ffsubsync.') &&
-        !entry.name.includes('.alass.') &&
-        !entry.name.includes('.autosubsync.') &&
+        !syncedSuffixes.some((suffix) => entry.name.includes(suffix)) &&
         matchesLanguageFilter(entry.name, languages)
       ) {
         if (isAlreadySynced(fullPath, engines)) {

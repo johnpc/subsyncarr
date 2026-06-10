@@ -1,11 +1,9 @@
-import { basename, dirname, join } from 'path';
-import { execPromise, ProcessingResult } from './helpers';
+import { buildOutputPath, execPromise, ProcessingResult } from './helpers';
 import { existsSync } from 'fs';
+import { getSuffixConfig } from './config';
 
 export async function generateAlassSubtitles(srtPath: string, videoPath: string): Promise<ProcessingResult> {
-  const directory = dirname(srtPath);
-  const srtBaseName = basename(srtPath, '.srt');
-  const outputPath = join(directory, `${srtBaseName}.alass.srt`);
+  const outputPath = buildOutputPath(srtPath, getSuffixConfig().alass);
 
   const exists = existsSync(outputPath);
   if (exists) {

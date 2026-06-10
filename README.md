@@ -105,6 +105,9 @@ docker run -d \
 | `CRON_SCHEDULE`             | `0 0 * * *`                   | Cron expression for sync schedule (daily at midnight), or `disabled` to turn off |
 | `MAX_CONCURRENT_SYNC_TASKS` | `1`                           | Number of subtitle files to process in parallel (higher = faster but more CPU)   |
 | `INCLUDE_ENGINES`           | `ffsubsync,autosubsync,alass` | Which sync engines to use (comma-separated)                                      |
+| `FFSUBSYNC_SUFFIX`          | `ffsubsync`                   | Custom suffix for ffsubsync output files (e.g., `sdh` → `movie.en.sdh.srt`)     |
+| `AUTOSUBSYNC_SUFFIX`        | `autosubsync`                 | Custom suffix for autosubsync output files (e.g., `cc` → `movie.en.cc.srt`)     |
+| `ALASS_SUFFIX`              | `alass`                       | Custom suffix for alass output files (e.g., `forced` → `movie.en.forced.srt`)   |
 | `SYNC_TIMEOUT`              | _(none)_                      | Timeout in seconds per sync operation (overrides SYNC_ENGINE_TIMEOUT_MS)         |
 | `SYNC_ENGINE_TIMEOUT_MS`    | `1800000`                     | Timeout for each sync engine in milliseconds (30 min default)                    |
 | `NODE_OPTIONS`             | `--max-old-space-size=512`    | Node.js options, used here to set memory limit (in MB)                           |
