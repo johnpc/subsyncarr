@@ -3,6 +3,20 @@ export interface ScanConfig {
   excludePaths: string[];
 }
 
+export interface SuffixConfig {
+  ffsubsync: string;
+  autosubsync: string;
+  alass: string;
+}
+
+export function getSuffixConfig(): SuffixConfig {
+  return {
+    ffsubsync: process.env.FFSUBSYNC_SUFFIX || 'ffsubsync',
+    autosubsync: process.env.AUTOSUBSYNC_SUFFIX || 'autosubsync',
+    alass: process.env.ALASS_SUFFIX || 'alass',
+  };
+}
+
 export interface RetentionConfig {
   keepRunsDays: number; // Keep complete runs for N days
   trimLogsDays: number; // Trim logs after N days
