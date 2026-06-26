@@ -319,6 +319,24 @@ h2 {
 .engine-result.error {
   background: #fee2e2;
   color: #991b1b;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.engine-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.engine-error-message {
+  margin-top: 4px;
+  font-size: 12px;
+  font-family: var(--mono, ui-monospace, monospace);
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.9;
 }
 
 .duration {
@@ -775,6 +793,47 @@ td {
   text-align: center;
   padding: 20px;
   font-style: italic;
+}
+
+.file-list-errors {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-error {
+  border-left: 3px solid var(--error);
+  padding: 4px 0 4px 10px;
+}
+
+.file-error-engine {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--error);
+  margin-right: 8px;
+}
+
+.file-error-message {
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.file-error-detail {
+  margin: 6px 0 0;
+  padding: 8px;
+  background: var(--background);
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
+  color: var(--text-secondary);
 }
 
 /* Mobile responsive */

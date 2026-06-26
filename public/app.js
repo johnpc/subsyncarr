@@ -647,11 +647,18 @@ class SubsyncarrPlusClient {
         const icon = result.success ? '✓' : '✗';
         const className = result.success ? 'success' : 'error';
         const duration = (result.duration / 1000).toFixed(1);
+        const error =
+          !result.success && result.message
+            ? `<div class="engine-error-message">${this.escapeHtml(result.message)}</div>`
+            : '';
 
         return `
         <div class="engine-result ${className}">
-          <span>${icon} ${name}</span>
-          <span class="duration">${duration}s</span>
+          <div class="engine-result-row">
+            <span>${icon} ${name}</span>
+            <span class="duration">${duration}s</span>
+          </div>
+          ${error}
         </div>
       `;
       })
@@ -813,12 +820,44 @@ class SubsyncarrPlusClient {
         '<div class="file-list-empty">No files in this category</div>';
     } else {
       const html = files
-        .map((file) => `<div class="file-list-item">${this.cleanFileName(file.file_path)}</div>`)
+        .map((file) => {
+          const name = this.cleanFileName(file.file_path);
+          const errors = category === 'failed' ? this.renderFileErrors(file) : '';
+          return `<div class="file-list-item">${this.escapeHtml(name)}${errors}</div>`;
+        })
         .join('');
       document.getElementById('fileListContent').innerHTML = html;
     }
 
     document.getElementById('fileListModal').classList.remove('hidden');
+  }
+
+  // Render the error messages for each engine that failed on a file
+  renderFileErrors(file) {
+    let engines;
+    try {
+      engines = JSON.parse(file.engines || '{}');
+    } catch {
+      return '';
+    }
+
+    const failures = Object.entries(engines).filter(([, result]) => result && result.success === false);
+
+    if (failures.length === 0) {
+      return '';
+    }
+
+    return `<div class="file-list-errors">${failures
+      .map(([name, result]) => {
+        const message = result.message || 'Unknown error';
+        const stderr = result.stderr ? `<pre class="file-error-detail">${this.escapeHtml(result.stderr)}</pre>` : '';
+        return `<div class="file-error">
+          <span class="file-error-engine">${this.escapeHtml(name)}</span>
+          <span class="file-error-message">${this.escapeHtml(message)}</span>
+          ${stderr}
+        </div>`;
+      })
+      .join('')}</div>`;
   }
 }
 
