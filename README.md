@@ -113,6 +113,7 @@ docker run -d \
 | `NODE_OPTIONS`             | `--max-old-space-size=512`    | Node.js options, used here to set memory limit (in MB)                           |
 | `WEB_PORT`                 | `3000`                        | Port for the web UI                                                              |
 | `WEB_HOST`                 | `127.0.0.1`                   | Host to bind the web UI to (`0.0.0.0` to expose externally)                     |
+| `BASE_PATH`                 | `_(none)_`                    | Reverse-proxy subpath for the web UI (`/subsyncarr` for `https://example.com/subsyncarr/`) |
 | `TZ`                        | _(system)_                    | Timezone for logging and cron scheduling (e.g., `America/New_York`)              |
 | `PUID`                      | `1000`                        | User ID for file permissions (run `id -u` to find yours)                         |
 | `PGID`                      | `1000`                        | Group ID for file permissions (run `id -g` to find yours)                        |

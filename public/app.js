@@ -1,3 +1,5 @@
+const API_BASE = window.__BASE_PATH__ || '';
+
 class SubsyncarrPlusClient {
   constructor() {
     this.ws = null;
@@ -14,7 +16,7 @@ class SubsyncarrPlusClient {
 
   initWebSocket() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    this.ws = new WebSocket(`${protocol}//${location.host}/ws`);
+    this.ws = new WebSocket(`${protocol}//${location.host}${API_BASE}/ws`);
 
     this.ws.onopen = () => {
       console.log('WebSocket connected');
@@ -83,7 +85,7 @@ class SubsyncarrPlusClient {
   }
 
   async fetchInitialState() {
-    const response = await fetch('/api/status');
+    const response = await fetch(`${API_BASE}/api/status`);
     const data = await response.json();
     this.state = data;
     this.render();
@@ -91,14 +93,14 @@ class SubsyncarrPlusClient {
   }
 
   async fetchHistory() {
-    const response = await fetch('/api/history');
+    const response = await fetch(`${API_BASE}/api/history`);
     const history = await response.json();
 
     // Fetch file results for each run to calculate engine stats
     const historyWithStats = await Promise.all(
       history.map(async (run) => {
         try {
-          const filesResponse = await fetch(`/api/runs/${run.id}`);
+          const filesResponse = await fetch(`${API_BASE}/api/runs/${run.id}`);
           const data = await filesResponse.json();
           const runWithFiles = { ...run, files: data.files || [] };
           // Cache for file list lookups
@@ -116,7 +118,7 @@ class SubsyncarrPlusClient {
 
   async fetchConfigStatus() {
     try {
-      const response = await fetch('/api/config');
+      const response = await fetch(`${API_BASE}/api/config`);
       const config = await response.json();
       this.renderConfigStatus(config);
     } catch (error) {
@@ -332,7 +334,7 @@ class SubsyncarrPlusClient {
   }
 
   async fetchBrowse(path) {
-    const url = path ? `/api/browse?path=${encodeURIComponent(path)}` : '/api/browse';
+    const url = path ? `${API_BASE}/api/browse?path=${encodeURIComponent(path)}` : `${API_BASE}/api/browse`;
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -477,7 +479,7 @@ class SubsyncarrPlusClient {
 
   async startRun(paths = null) {
     try {
-      const response = await fetch('/api/run/start', {
+      const response = await fetch(`${API_BASE}/api/run/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paths }),
@@ -498,7 +500,7 @@ class SubsyncarrPlusClient {
     }
 
     try {
-      const response = await fetch('/api/run/stop', {
+      const response = await fetch(`${API_BASE}/api/run/stop`, {
         method: 'POST',
       });
 
@@ -513,7 +515,7 @@ class SubsyncarrPlusClient {
 
   async skipFile(filePath) {
     try {
-      await fetch('/api/file/skip', {
+      await fetch(`${API_BASE}/api/file/skip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filePath }),
@@ -525,7 +527,7 @@ class SubsyncarrPlusClient {
 
   async viewLogs(runId) {
     try {
-      const response = await fetch(`/api/runs/${runId}/logs`);
+      const response = await fetch(`${API_BASE}/api/runs/${runId}/logs`);
       const data = await response.json();
 
       document.getElementById('logsContent').textContent = data.logs || 'No logs available';
@@ -542,7 +544,7 @@ class SubsyncarrPlusClient {
     }
 
     try {
-      const response = await fetch('/api/files/clear', {
+      const response = await fetch(`${API_BASE}/api/files/clear`, {
         method: 'POST',
       });
 
