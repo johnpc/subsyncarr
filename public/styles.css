@@ -22,6 +22,7 @@ body {
   background: var(--background);
   color: var(--text);
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 .container {
@@ -566,11 +567,12 @@ td {
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.55;
   transition: opacity 0.15s;
 }
 
-.tree-row:hover .tree-add {
+.tree-row:hover .tree-add,
+.tree-row:focus-within .tree-add {
   opacity: 1;
 }
 
@@ -900,5 +902,105 @@ td {
   th, td {
     padding: 8px;
     font-size: 13px;
+  }
+
+  /* Modals: use most of the viewport instead of a fixed desktop width */
+  .modal {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    padding: 16px;
+    margin-top: 8px;
+  }
+
+  .modal-content.picker-modal,
+  .modal-content.logs-modal,
+  .modal-content.file-list-modal {
+    max-height: calc(100vh - 24px);
+  }
+
+  /* Folder picker: stack tree above selected-paths instead of side-by-side */
+  .picker-body {
+    flex-direction: column;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .picker-tree {
+    max-height: 38vh;
+  }
+
+  .picker-selected {
+    max-height: 26vh;
+  }
+
+  /* Bigger touch targets */
+  .tree-add {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    opacity: 0.85;
+  }
+
+  .selected-path-remove {
+    font-size: 24px;
+    padding: 4px 8px;
+  }
+
+  .btn-close {
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
+  }
+
+  .btn-skip,
+  .btn-view-logs {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  /* Stack modal action buttons full-width so they're easy to tap */
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+
+  .modal-actions .btn {
+    flex: 1 1 auto;
+    min-width: 45%;
+  }
+
+  /* Let file cards wrap instead of squeezing the skip button */
+  .file-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .engine-status {
+    font-size: 13px;
+  }
+}
+
+/* Small phones: tighten further and force single-column modal actions */
+@media (max-width: 420px) {
+  h1 {
+    font-size: 19px;
+  }
+
+  .status-label,
+  .status-paths {
+    font-size: 12px;
+  }
+
+  .modal-actions .btn {
+    min-width: 100%;
+  }
+
+  .tree-name,
+  .selected-path-text {
+    font-size: 12px;
   }
 }
