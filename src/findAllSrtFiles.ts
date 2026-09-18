@@ -32,7 +32,10 @@ export interface ScanResult {
 
 export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
   const engines = process.env.INCLUDE_ENGINES?.split(',') || ['ffsubsync', 'autosubsync', 'alass'];
-  const languages = process.env.SYNC_LANGUAGES?.split(',').map((l) => l.trim()).filter(Boolean) || [];
+  const languages =
+    process.env.SYNC_LANGUAGES?.split(',')
+      .map((l) => l.trim())
+      .filter(Boolean) || [];
   const files: string[] = [];
   let skippedCount = 0;
 
@@ -41,9 +44,8 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
   }
 
   const suffixConfig = getSuffixConfig();
-  const syncedSuffixes = engines.map(
-    (engine) => `.${suffixConfig[engine as keyof typeof suffixConfig] || engine}.`,
-  );
+  // Generated outputs must be excluded even when their engine is disabled.
+  const syncedSuffixes = Object.values(suffixConfig).map((suffix) => `.${suffix}.`);
 
   async function scan(directory: string): Promise<void> {
     // Check if this directory should be excluded
