@@ -132,6 +132,8 @@ docker run -d \
 
 The `SYNC_ENGINE_TIMEOUT_MS` environment variable controls how long each sync engine can run before being terminated. This prevents hung processes from blocking the queue.
 
+On timeout the whole process tree of the engine is killed (the shell, `ffsubsync`/`alass` and the `ffmpeg` processes they spawn), first with `SIGTERM` and after 5 seconds with `SIGKILL`. The image runs `tini` as PID 1 so any process that still gets orphaned is reaped instead of lingering as a `<defunct>` zombie.
+
 Example configuration:
 
 ```yaml
