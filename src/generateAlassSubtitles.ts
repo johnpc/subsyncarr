@@ -1,8 +1,12 @@
 import { buildOutputPath, execPromise, ProcessingResult } from './helpers';
 import { existsSync } from 'fs';
 import { getSuffixConfig } from './config';
+import { unsupportedFormatResult } from './subtitleFormats';
 
 export async function generateAlassSubtitles(srtPath: string, videoPath: string): Promise<ProcessingResult> {
+  const unsupported = unsupportedFormatResult('alass', srtPath);
+  if (unsupported) return unsupported;
+
   const outputPath = buildOutputPath(srtPath, getSuffixConfig().alass);
 
   const exists = existsSync(outputPath);
