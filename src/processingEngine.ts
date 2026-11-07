@@ -48,7 +48,9 @@ export class ProcessingEngine extends EventEmitter {
     this.log(`[${new Date().toISOString()}] Scan paths: ${JSON.stringify(scanConfig.includePaths)}`);
 
     const { files: srtFiles, skippedCount } = await findAllSrtFiles(scanConfig);
-    this.log(`[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files to process (${skippedCount} already synced)`);
+    this.log(
+      `[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files to process (${skippedCount} already synced)`,
+    );
 
     this.emit('run:files_found', srtFiles, skippedCount);
 

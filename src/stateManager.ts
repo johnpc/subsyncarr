@@ -36,7 +36,11 @@ export class StateManager extends EventEmitter {
   }
 
   // Run management
-  startRun(totalFiles: number, enabledEngines: string[] = ['ffsubsync', 'autosubsync', 'alass'], alreadySyncedCount: number = 0): string {
+  startRun(
+    totalFiles: number,
+    enabledEngines: string[] = ['ffsubsync', 'autosubsync', 'alass'],
+    alreadySyncedCount: number = 0,
+  ): string {
     const runId = randomUUID();
     this.db.createRun(runId, totalFiles);
 
@@ -107,7 +111,13 @@ export class StateManager extends EventEmitter {
     this.db.createFileResult(runId, filePath, videoPath);
   }
 
-  updateFileStatus(runId: string, filePath: string, status: FileResult['status'], currentEngine?: string | null, videoPath?: string | null): void {
+  updateFileStatus(
+    runId: string,
+    filePath: string,
+    status: FileResult['status'],
+    currentEngine?: string | null,
+    videoPath?: string | null,
+  ): void {
     const updates: Partial<FileResult> = { status };
     if (currentEngine !== undefined) {
       updates.current_engine = currentEngine;
