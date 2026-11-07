@@ -1,12 +1,15 @@
-import { basename, dirname, join } from 'path';
+import { dirname, join } from 'path';
+import { getSubtitleExtension, stripSubtitleExtension } from './subtitleFormats';
 
-export function buildOutputPath(srtPath: string, suffix: string): string {
-  const directory = dirname(srtPath);
-  let srtBaseName = basename(srtPath, '.srt');
-  if (srtBaseName.endsWith(`.${suffix}`)) {
-    srtBaseName = srtBaseName.slice(0, -(suffix.length + 1));
+/** Builds e.g. movie.en.ffsubsync.srt / movie.en.ffsubsync.ass, keeping the input's subtitle format. */
+export function buildOutputPath(subtitlePath: string, suffix: string): string {
+  const directory = dirname(subtitlePath);
+  const ext = getSubtitleExtension(subtitlePath) ?? '.srt';
+  let baseName = stripSubtitleExtension(subtitlePath);
+  if (baseName.endsWith(`.${suffix}`)) {
+    baseName = baseName.slice(0, -(suffix.length + 1));
   }
-  return join(directory, `${srtBaseName}.${suffix}.srt`);
+  return join(directory, `${baseName}.${suffix}${ext}`);
 }
 
 export interface ProcessingResult {

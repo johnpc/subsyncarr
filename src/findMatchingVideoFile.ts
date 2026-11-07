@@ -1,12 +1,13 @@
 import { existsSync } from 'fs';
-import { basename, dirname, join } from 'path';
+import { dirname, join } from 'path';
+import { stripSubtitleExtension } from './subtitleFormats';
 
 type VideoExtension = '.mkv' | '.mp4' | '.avi' | '.mov';
 const VIDEO_EXTENSIONS: VideoExtension[] = ['.mkv', '.mp4', '.avi', '.mov'];
 
 export function findMatchingVideoFile(srtPath: string): string | null {
   const directory = dirname(srtPath);
-  const srtBaseName = basename(srtPath, '.srt');
+  const srtBaseName = stripSubtitleExtension(srtPath);
 
   // Try exact match first
   for (const ext of VIDEO_EXTENSIONS) {
