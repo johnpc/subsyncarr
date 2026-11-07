@@ -27,7 +27,7 @@ export async function generateFfsubsyncSubtitles(srtPath: string, videoPath: str
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const isTimeout = errorMessage.includes('SIGTERM') || errorMessage.includes('timed out');
+    const isTimeout = errorMessage.includes('SIGTERM') || /timed out/i.test(errorMessage);
 
     // Extract stdout/stderr from error if available
     const execError = error as { stdout?: string; stderr?: string };
