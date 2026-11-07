@@ -299,4 +299,4 @@ Issues and pull requests are welcome! Please report bugs or suggest features via
 
 ## License
 
-See LICENSE file for details.
+MIT — see [LICENSE](LICENSE).
