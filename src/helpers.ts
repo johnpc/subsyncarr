@@ -1,13 +1,15 @@
-import { exec } from 'child_process';
-import { basename, dirname, join } from 'path';
+import { dirname, join } from 'path';
+import { getSubtitleExtension, stripSubtitleExtension } from './subtitleFormats';
 
-export function buildOutputPath(srtPath: string, suffix: string): string {
-  const directory = dirname(srtPath);
-  let srtBaseName = basename(srtPath, '.srt');
-  if (srtBaseName.endsWith(`.${suffix}`)) {
-    srtBaseName = srtBaseName.slice(0, -(suffix.length + 1));
+/** Builds e.g. movie.en.ffsubsync.srt / movie.en.ffsubsync.ass, keeping the input's subtitle format. */
+export function buildOutputPath(subtitlePath: string, suffix: string): string {
+  const directory = dirname(subtitlePath);
+  const ext = getSubtitleExtension(subtitlePath) ?? '.srt';
+  let baseName = stripSubtitleExtension(subtitlePath);
+  if (baseName.endsWith(`.${suffix}`)) {
+    baseName = baseName.slice(0, -(suffix.length + 1));
   }
-  return join(directory, `${srtBaseName}.${suffix}.srt`);
+  return join(directory, `${baseName}.${suffix}${ext}`);
 }
 
 export interface ProcessingResult {
@@ -18,34 +20,4 @@ export interface ProcessingResult {
   skipped?: boolean;
 }
 
-function getTimeoutMs(): number {
-  // Support both SYNC_TIMEOUT (seconds) and SYNC_ENGINE_TIMEOUT_MS (milliseconds)
-  const seconds = process.env.SYNC_TIMEOUT;
-  if (seconds) {
-    const val = parseInt(seconds, 10);
-    if (!isNaN(val) && val > 0) return val * 1000;
-  }
-  const ms = process.env.SYNC_ENGINE_TIMEOUT_MS;
-  if (ms) {
-    const val = parseInt(ms, 10);
-    if (!isNaN(val) && val > 0) return val;
-  }
-  return 1800000; // 30 minutes default
-}
-
-export function execPromise(command: string, timeoutMs?: number): Promise<{ stdout: string; stderr: string }> {
-  const timeout = timeoutMs ?? getTimeoutMs();
-  return new Promise((resolve, reject) => {
-    exec(command, { timeout, maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
-      if (error) {
-        if (error.killed) {
-          reject(new Error(`Timed out after ${timeout / 1000}s: ${command}`));
-        } else {
-          reject(error);
-        }
-      } else {
-        resolve({ stdout, stderr });
-      }
-    });
-  });
-}
+export { execPromise } from './execPromise';
