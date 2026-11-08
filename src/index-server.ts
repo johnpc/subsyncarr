@@ -4,6 +4,7 @@ import { ProcessingCoordinator } from './coordinator';
 import { SubsyncarrPlusServer } from './server';
 import { schedule } from 'node-cron';
 import { getRetentionConfig } from './config';
+import { sweepLeftoverTempDirs } from './tempDir';
 
 async function main() {
   const dbPath = process.env.DB_PATH || '/app/data/subsyncarr-plus.db';
@@ -11,6 +12,11 @@ async function main() {
   const host = process.env.WEB_HOST || '0.0.0.0';
 
   console.log(`[${new Date().toISOString()}] Initializing Subsyncarr Plus Server...`);
+
+  const sweptTempDirs = sweepLeftoverTempDirs();
+  if (sweptTempDirs > 0) {
+    console.log(`[${new Date().toISOString()}] Removed ${sweptTempDirs} leftover temp directories`);
+  }
 
   const stateManager = new StateManager(dbPath);
   const engine = new ProcessingEngine();
