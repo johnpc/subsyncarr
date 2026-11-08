@@ -48,6 +48,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     curl \
     ca-certificates \
+    tini \
     && dpkgArch="$(dpkg --print-architecture)" \
     && curl -fsSL "https://github.com/tianon/gosu/releases/download/1.17/gosu-$dpkgArch" -o /usr/local/bin/gosu \
     && chmod +x /usr/local/bin/gosu \
@@ -79,5 +80,7 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 3000
 
 USER root
-ENTRYPOINT ["/entrypoint.sh"]
+# tini runs as PID 1 so orphaned engine processes (e.g. ffmpeg left behind by a
+# crashed ffsubsync) are reaped instead of piling up as zombies under node.
+ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
 CMD ["node", "--optimize-for-size", "dist/index-server.js"]
