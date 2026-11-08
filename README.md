@@ -17,6 +17,7 @@ An automated subtitle synchronization tool that runs as a Docker container. It c
 - **Configuration Dashboard** - View current settings, monitored paths, and schedule status
 - **Configurable Timeouts** - Set per-engine timeout limits to prevent hung processes
 - **Log Management** - Configurable retention policies with automatic trimming and deletion
+- **SRT and ASS Subtitles** - Syncs SubRip (`.srt`) and Advanced SubStation Alpha (`.ass`) subtitles. Outputs keep the input's format (e.g. `movie.en.ffsubsync.ass`).
 - **Non Destructive** - Creates new files for each engine so no original files are altered. Allows easy switching between engines while watching content.
 
 ## Quick Start
@@ -97,36 +98,36 @@ docker run -d \
 
 ### Core Configuration
 
-| Variable                    | Default                       | Description                                                                      |
-| --------------------------- | ----------------------------- | -------------------------------------------------------------------------------- |
-| `SCAN_PATHS`                | `/scan_dir`                   | Comma-separated directories to scan for SRT files (must be mounted as volumes)   |
-| `EXCLUDE_PATHS`             | _(none)_                      | Comma-separated directories to exclude from scanning                             |
+| Variable                    | Default                       | Description                                                                                                                                                                            |
+| --------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SCAN_PATHS`                | `/scan_dir`                   | Comma-separated directories to scan for subtitle files (must be mounted as volumes)                                                                                                    |
+| `EXCLUDE_PATHS`             | _(none)_                      | Comma-separated directories to exclude from scanning                                                                                                                                   |
 | `SYNC_LANGUAGES`            | _(none)_                      | Comma-separated language codes to sync (e.g., `en,de`). Only syncs subtitles with matching language tags in the filename (e.g., `movie.en.srt`). If not set, all subtitles are synced. |
-| `CRON_SCHEDULE`             | `0 0 * * *`                   | Cron expression for sync schedule (daily at midnight), or `disabled` to turn off |
-| `MAX_CONCURRENT_SYNC_TASKS` | `1`                           | Number of subtitle files to process in parallel (higher = faster but more CPU)   |
-| `INCLUDE_ENGINES`           | `ffsubsync,autosubsync,alass` | Which sync engines to use (comma-separated)                                      |
-| `FFSUBSYNC_SUFFIX`          | `ffsubsync`                   | Custom suffix for ffsubsync output files (e.g., `sdh` → `movie.en.sdh.srt`)     |
-| `AUTOSUBSYNC_SUFFIX`        | `autosubsync`                 | Custom suffix for autosubsync output files (e.g., `cc` → `movie.en.cc.srt`)     |
-| `ALASS_SUFFIX`              | `alass`                       | Custom suffix for alass output files (e.g., `forced` → `movie.en.forced.srt`)   |
-| `SYNC_TIMEOUT`              | _(none)_                      | Timeout in seconds per sync operation (overrides SYNC_ENGINE_TIMEOUT_MS)         |
-| `SYNC_ENGINE_TIMEOUT_MS`    | `1800000`                     | Timeout for each sync engine in milliseconds (30 min default)                    |
-| `NODE_OPTIONS`             | `--max-old-space-size=512`    | Node.js options, used here to set memory limit (in MB)                           |
-| `WEB_PORT`                 | `3000`                        | Port for the web UI                                                              |
-| `WEB_HOST`                 | `127.0.0.1`                   | Host to bind the web UI to (`0.0.0.0` to expose externally)                     |
-| `TZ`                        | _(system)_                    | Timezone for logging and cron scheduling (e.g., `America/New_York`)              |
-| `PUID`                      | `1000`                        | User ID for file permissions (run `id -u` to find yours)                         |
-| `PGID`                      | `1000`                        | Group ID for file permissions (run `id -g` to find yours)                        |
+| `CRON_SCHEDULE`             | `0 0 * * *`                   | Cron expression for sync schedule (daily at midnight), or `disabled` to turn off                                                                                                       |
+| `MAX_CONCURRENT_SYNC_TASKS` | `1`                           | Number of subtitle files to process in parallel (higher = faster but more CPU)                                                                                                         |
+| `INCLUDE_ENGINES`           | `ffsubsync,autosubsync,alass` | Which sync engines to use (comma-separated)                                                                                                                                            |
+| `FFSUBSYNC_SUFFIX`          | `ffsubsync`                   | Custom suffix for ffsubsync output files (e.g., `sdh` → `movie.en.sdh.srt`)                                                                                                            |
+| `AUTOSUBSYNC_SUFFIX`        | `autosubsync`                 | Custom suffix for autosubsync output files (e.g., `cc` → `movie.en.cc.srt`)                                                                                                            |
+| `ALASS_SUFFIX`              | `alass`                       | Custom suffix for alass output files (e.g., `forced` → `movie.en.forced.srt`)                                                                                                          |
+| `SYNC_TIMEOUT`              | _(none)_                      | Timeout in seconds per sync operation (overrides SYNC_ENGINE_TIMEOUT_MS)                                                                                                               |
+| `SYNC_ENGINE_TIMEOUT_MS`    | `1800000`                     | Timeout for each sync engine in milliseconds (30 min default)                                                                                                                          |
+| `NODE_OPTIONS`              | `--max-old-space-size=512`    | Node.js options, used here to set memory limit (in MB)                                                                                                                                 |
+| `WEB_PORT`                  | `3000`                        | Port for the web UI                                                                                                                                                                    |
+| `WEB_HOST`                  | `127.0.0.1`                   | Host to bind the web UI to (`0.0.0.0` to expose externally)                                                                                                                            |
+| `TZ`                        | _(system)_                    | Timezone for logging and cron scheduling (e.g., `America/New_York`)                                                                                                                    |
+| `PUID`                      | `1000`                        | User ID for file permissions (run `id -u` to find yours)                                                                                                                               |
+| `PGID`                      | `1000`                        | Group ID for file permissions (run `id -g` to find yours)                                                                                                                              |
 
 ### Database & Log Configuration
 
-| Variable                           | Default                        | Description                                 |
-| ---------------------------------- | ------------------------------ | ------------------------------------------- |
+| Variable                           | Default                   | Description                                 |
+| ---------------------------------- | ------------------------- | ------------------------------------------- |
 | `DB_PATH`                          | `/app/data/subsyncarr.db` | SQLite database location                    |
-| `LOG_BUFFER_SIZE`                  | `1000`                         | Ring buffer size for in-memory logs         |
-| `RETENTION_KEEP_RUNS_DAYS`         | `30`                           | Keep complete runs for N days               |
-| `RETENTION_TRIM_LOGS_DAYS`         | `7`                            | Trim logs after N days (keeps summary only) |
-| `RETENTION_MAX_LOG_SIZE`           | `10000`                        | Max size for trimmed logs in bytes          |
-| `RETENTION_CLEANUP_INTERVAL_HOURS` | `24`                           | How often to run cleanup (in hours)         |
+| `LOG_BUFFER_SIZE`                  | `1000`                    | Ring buffer size for in-memory logs         |
+| `RETENTION_KEEP_RUNS_DAYS`         | `30`                      | Keep complete runs for N days               |
+| `RETENTION_TRIM_LOGS_DAYS`         | `7`                       | Trim logs after N days (keeps summary only) |
+| `RETENTION_MAX_LOG_SIZE`           | `10000`                   | Max size for trimmed logs in bytes          |
+| `RETENTION_CLEANUP_INTERVAL_HOURS` | `24`                      | How often to run cleanup (in hours)         |
 
 ### Timeout Configuration
 
@@ -138,7 +139,6 @@ Example configuration:
 environment:
   - SYNC_ENGINE_TIMEOUT_MS=3600000 # 60 minutes for large files
 ```
-
 
 ### Directory Structure
 
@@ -158,6 +158,16 @@ Your media directory should be organized with video files and their correspondin
 │   │   ├── Show.S01E01.mkv
 │   │   └── Show.S01E01.srt
 ```
+
+`.ass` subtitles are handled the same way and produce `.ass` outputs (e.g. `Movie Title (2024).en.ass` → `Movie Title (2024).en.ffsubsync.ass`). Generated outputs are never picked up as inputs.
+
+**Engine support by format:**
+
+| Engine      | `.srt` | `.ass`                                     |
+| ----------- | ------ | ------------------------------------------ |
+| ffsubsync   | Yes    | Yes                                        |
+| alass       | Yes    | Yes                                        |
+| autosubsync | Yes    | No (skipped for `.ass` with a log message) |
 
 The app follows standard naming conventions compatible with Plex, Jellyfin, Emby, and Bazarr.
 
@@ -272,15 +282,15 @@ If the container is being killed due to OOM (Out Of Memory):
 2. Increase memory limit in `NODE_OPTIONS` (e.g., `--max-old-space-size=1024`)
 3. Increase memory limit in docker-compose.yaml
 4. Reduce `SYNC_ENGINE_TIMEOUT_MS` for faster timeouts
-4. Exclude large files or problematic directories with `EXCLUDE_PATHS`
+5. Exclude large files or problematic directories with `EXCLUDE_PATHS`
 
 ### Files Not Being Processed
 
 Check that:
 
-1. Your subtitle files are named to match video files (e.g., `movie.mkv` and `movie.srt`)
+1. Your subtitle files are named to match video files (e.g., `movie.mkv` and `movie.srt` or `movie.ass`). Supported video extensions are `.mkv`, `.mp4`, `.avi`, `.mov` and `.ts`.
 2. `SCAN_PATHS` matches your mounted volumes
-3. Files haven't already been synced (check for `.ffsubsync.srt` files)
+3. Files haven't already been synced (check for `.ffsubsync.srt` / `.ffsubsync.ass` files)
 4. Files aren't being auto-skipped due to repeated failures (check skip status in Web UI)
 
 ## Docker Hub
@@ -299,4 +309,4 @@ Issues and pull requests are welcome! Please report bugs or suggest features via
 
 ## License
 
-See LICENSE file for details.
+MIT — see [LICENSE](LICENSE).

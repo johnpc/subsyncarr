@@ -48,7 +48,9 @@ export class ProcessingEngine extends EventEmitter {
     this.log(`[${new Date().toISOString()}] Scan paths: ${JSON.stringify(scanConfig.includePaths)}`);
 
     const { files: srtFiles, skippedCount } = await findAllSrtFiles(scanConfig);
-    this.log(`[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files to process (${skippedCount} already synced)`);
+    this.log(
+      `[${new Date().toISOString()}] Found ${srtFiles.length} subtitle files to process (${skippedCount} already synced)`,
+    );
 
     this.emit('run:files_found', srtFiles, skippedCount);
 
@@ -140,9 +142,9 @@ export class ProcessingEngine extends EventEmitter {
 
         const duration = Date.now() - startTime;
 
-        // If this engine was skipped (already processed), log and continue
+        // If this engine was skipped (already processed or unsupported format), log and continue
         if (result.skipped) {
-          this.log(`[${new Date().toISOString()}] ⊘ ${engine} skipped (already processed): ${fileName}`);
+          this.log(`[${new Date().toISOString()}] ⊘ ${engine} skipped: ${result.message}`);
           this.emit('file:engine_completed', {
             srtPath,
             engine,

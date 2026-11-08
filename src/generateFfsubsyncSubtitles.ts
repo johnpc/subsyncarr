@@ -1,8 +1,12 @@
 import { buildOutputPath, execPromise, ProcessingResult } from './helpers';
 import { existsSync } from 'fs';
 import { getSuffixConfig } from './config';
+import { unsupportedFormatResult } from './subtitleFormats';
 
 export async function generateFfsubsyncSubtitles(srtPath: string, videoPath: string): Promise<ProcessingResult> {
+  const unsupported = unsupportedFormatResult('ffsubsync', srtPath);
+  if (unsupported) return unsupported;
+
   const outputPath = buildOutputPath(srtPath, getSuffixConfig().ffsubsync);
 
   // Check if synced subtitle already exists
@@ -27,7 +31,7 @@ export async function generateFfsubsyncSubtitles(srtPath: string, videoPath: str
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const isTimeout = errorMessage.includes('SIGTERM') || errorMessage.includes('timed out');
+    const isTimeout = errorMessage.includes('SIGTERM') || /timed out/i.test(errorMessage);
 
     // Extract stdout/stderr from error if available
     const execError = error as { stdout?: string; stderr?: string };
