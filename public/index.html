@@ -4,7 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Subsyncarr+</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧬</text></svg>" />
+    <meta name="color-scheme" content="light dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧬</text></svg>"
+    />
+    <script>
+      // Apply the stored (or OS-preferred) theme before the stylesheet paints so there is no flash of the wrong theme.
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var dark =
+            stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) {
+          // localStorage unavailable; the prefers-color-scheme fallback in styles.css takes over.
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -12,7 +29,19 @@
       <header>
         <div class="header-top">
           <div>
-            <h1>🧬 Subsyncarr+</h1>
+            <div class="title-row">
+              <h1>🧬 Subsyncarr+</h1>
+              <button
+                id="themeToggle"
+                class="theme-toggle"
+                type="button"
+                aria-label="Toggle dark mode"
+                title="Toggle dark mode"
+              >
+                <span class="theme-when-light" aria-hidden="true">🌙</span><span class="theme-when-light">Dark</span>
+                <span class="theme-when-dark" aria-hidden="true">☀️</span><span class="theme-when-dark">Light</span>
+              </button>
+            </div>
             <p class="subtitle">Subtitle Synchronization</p>
           </div>
           <div class="status-indicators">
@@ -65,7 +94,9 @@
           <span class="key-title">Engine Results Key:</span>
           <span class="key-item"><span class="engine-pass">1-9</span> = Passed files</span>
           <span class="key-item"><span class="engine-fail">1-9</span> = Failed files</span>
-          <span class="key-item">Engines: <strong>F</strong>=ffsubsync, <strong>Au</strong>=autosubsync, <strong>Al</strong>=alass</span>
+          <span class="key-item"
+            >Engines: <strong>F</strong>=ffsubsync, <strong>Au</strong>=autosubsync, <strong>Al</strong>=alass</span
+          >
         </div>
         <table id="historyTable">
           <thead>
