@@ -4,10 +4,12 @@ import { processSrtFile } from './processSrtFile';
 
 async function main(): Promise<void> {
   try {
-    // Find all .srt files
+    // Find all subtitle files (.srt, .ass)
     const scanConfig = getScanConfig();
     const { files: srtFiles, skippedCount } = await findAllSrtFiles(scanConfig);
-    console.log(`${new Date().toLocaleString()} Found ${srtFiles.length} SRT files (${skippedCount} already synced)`);
+    console.log(
+      `${new Date().toLocaleString()} Found ${srtFiles.length} subtitle files (${skippedCount} already synced)`,
+    );
 
     const maxConcurrentSyncTasks = process.env.MAX_CONCURRENT_SYNC_TASKS
       ? parseInt(process.env.MAX_CONCURRENT_SYNC_TASKS)

@@ -1,9 +1,11 @@
 import { readdir } from 'fs/promises';
-import { basename, extname, join } from 'path';
+import { join } from 'path';
 import { existsSync } from 'fs';
 import { getSuffixConfig, ScanConfig } from './config';
 import { buildOutputPath } from './helpers';
+import { engineSupportsSubtitle, isSubtitleFile, stripSubtitleExtension } from './subtitleFormats';
 
+// Only engines that support the file's format are expected to produce an output
 function isAlreadySynced(srtPath: string, engines: string[]): boolean {
   const suffixConfig = getSuffixConfig();
 
@@ -17,8 +19,8 @@ function isAlreadySynced(srtPath: string, engines: string[]): boolean {
 function matchesLanguageFilter(fileName: string, languages: string[]): boolean {
   if (languages.length === 0) return true;
 
-  // Extract language tag from filename like "movie.en.srt" or "movie.eng.srt"
-  const parts = basename(fileName, '.srt').split('.');
+  // Extract language tag from filename like "movie.en.srt" or "movie.eng.ass"
+  const parts = stripSubtitleExtension(fileName).split('.');
   if (parts.length < 2) return false;
 
   const langTag = parts[parts.length - 1].toLowerCase();
@@ -32,18 +34,20 @@ export interface ScanResult {
 
 export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
   const engines = process.env.INCLUDE_ENGINES?.split(',') || ['ffsubsync', 'autosubsync', 'alass'];
-  const languages = process.env.SYNC_LANGUAGES?.split(',').map((l) => l.trim()).filter(Boolean) || [];
+  const languages =
+    process.env.SYNC_LANGUAGES?.split(',')
+      .map((l) => l.trim())
+      .filter(Boolean) || [];
   const files: string[] = [];
   let skippedCount = 0;
+  let unsupportedCount = 0;
 
   if (languages.length > 0) {
     console.log(`${new Date().toLocaleString()} Language filter active: ${languages.join(', ')}`);
   }
 
   const suffixConfig = getSuffixConfig();
-  const syncedSuffixes = engines.map(
-    (engine) => `.${suffixConfig[engine as keyof typeof suffixConfig] || engine}.`,
-  );
+  const syncedSuffixes = engines.map((engine) => `.${suffixConfig[engine as keyof typeof suffixConfig] || engine}.`);
 
   async function scan(directory: string): Promise<void> {
     // Check if this directory should be excluded
@@ -60,11 +64,14 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
         await scan(fullPath);
       } else if (
         entry.isFile() &&
-        extname(entry.name).toLowerCase() === '.srt' &&
+        isSubtitleFile(entry.name) &&
         !syncedSuffixes.some((suffix) => entry.name.includes(suffix)) &&
         matchesLanguageFilter(entry.name, languages)
       ) {
-        if (isAlreadySynced(fullPath, engines)) {
+        const supportedEngines = engines.filter((engine) => engineSupportsSubtitle(engine, fullPath));
+        if (supportedEngines.length === 0) {
+          unsupportedCount++;
+        } else if (isAlreadySynced(fullPath, supportedEngines)) {
           skippedCount++;
         } else {
           files.push(fullPath);
@@ -79,7 +86,12 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
   }
 
   if (skippedCount > 0) {
-    console.log(`${new Date().toLocaleString()} Skipped ${skippedCount} already-synced SRT files`);
+    console.log(`${new Date().toLocaleString()} Skipped ${skippedCount} already-synced subtitle files`);
+  }
+  if (unsupportedCount > 0) {
+    console.log(
+      `${new Date().toLocaleString()} Ignored ${unsupportedCount} subtitle files whose format no enabled engine supports`,
+    );
   }
 
   return { files, skippedCount };
