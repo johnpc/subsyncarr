@@ -9,10 +9,17 @@ import { getScanConfig } from './config';
 import cronstrue from 'cronstrue';
 import parseExpression from 'cron-parser';
 
+// Optional BASE_PATH env var for reverse-proxy subpath support.
+// e.g. https://example.com/subsyncarr desires BASE_PATH=/subsyncarr to work.
+// Not configuring BASE_PATH assumes https://example.com/
+// or https://subsyncarr.example.com/ or just http://127.0.0.1/ etc. for path.
+// .replace(/\/$/, '') strips trailing / from user misconfiguration
+const basePath = (process.env.BASE_PATH || '').replace(/\/$/, '');
+
 export class SubsyncarrPlusServer {
   private app = express();
   private httpServer = createServer(this.app);
-  private wss = new WebSocketServer({ server: this.httpServer, path: '/ws' });
+  private wss = new WebSocketServer({ server: this.httpServer, path: `${basePath}/ws` });
   private clients: Set<WebSocket> = new Set();
 
   constructor(
@@ -26,12 +33,28 @@ export class SubsyncarrPlusServer {
 
   private setupMiddleware() {
     this.app.use(express.json());
-    this.app.use(express.static(join(__dirname, '../public')));
+
+    // Serve index.html ourselves (instead of via express.static) so we can
+    // inject the base path for app.js to read, and fix the asset URLs.
+    this.app.get(`${basePath}/`, (req, res) => {
+      const indexPath = join(__dirname, '../public/index.html');
+      let html = fs.readFileSync(indexPath, 'utf-8');
+      html = html
+        .replace('href="/styles.css"', `href="${basePath}/styles.css"`)
+        .replace('src="/app.js"', `src="${basePath}/app.js"`)
+        .replace('</head>', `<script>window.__BASE_PATH__ = ${JSON.stringify(basePath)};</script></head>`);
+      res.type('html').send(html);
+    });
+
+    this.app.use(basePath, express.static(join(__dirname, '../public')));
   }
 
   private setupRoutes() {
+    const router = express.Router();
+    this.app.use(basePath, router);
+
     // Get configuration status
-    this.app.get('/api/config', (req, res) => {
+    router.get('/api/config', (req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/config`);
       const config = getScanConfig();
       const isDefaultPath = config.includePaths.length === 1 && config.includePaths[0] === '/scan_dir';
@@ -69,7 +92,7 @@ export class SubsyncarrPlusServer {
     // No `path` query → returns the configured roots as virtual top-level entries.
     // Otherwise enumerates immediate subdirectories of `path`, but only if `path`
     // resolves inside one of the configured roots.
-    this.app.get('/api/browse', (req, res) => {
+    router.get('/api/browse', (req, res) => {
       const requestedPath = typeof req.query.path === 'string' ? req.query.path : '';
       console.log(`[${new Date().toISOString()}] GET /api/browse${requestedPath ? ` path=${requestedPath}` : ''}`);
 
@@ -126,7 +149,7 @@ export class SubsyncarrPlusServer {
     });
 
     // Get current status
-    this.app.get('/api/status', (req, res) => {
+    router.get('/api/status', (req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/status`);
       const currentRun = this.stateManager.getCurrentRun();
       res.json({
@@ -137,14 +160,14 @@ export class SubsyncarrPlusServer {
     });
 
     // Get run history
-    this.app.get('/api/history', (req, res) => {
+    router.get('/api/history', (req, res) => {
       const limit = parseInt(req.query.limit as string, 10) || 50;
       console.log(`[${new Date().toISOString()}] GET /api/history (limit: ${limit})`);
       res.json(this.stateManager.getRunHistory(limit));
     });
 
     // Get specific run details
-    this.app.get('/api/runs/:id', (req, res) => {
+    router.get('/api/runs/:id', (req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/runs/${req.params.id}`);
       const currentRun = this.stateManager.getCurrentRun();
       const requestedId = req.params.id;
@@ -172,7 +195,7 @@ export class SubsyncarrPlusServer {
     });
 
     // Get logs for a specific run
-    this.app.get('/api/runs/:id/logs', (req, res) => {
+    router.get('/api/runs/:id/logs', (req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/runs/${req.params.id}/logs`);
       const requestedId = req.params.id;
 
@@ -191,7 +214,7 @@ export class SubsyncarrPlusServer {
     });
 
     // Start a new run
-    this.app.post('/api/run/start', async (req, res) => {
+    router.post('/api/run/start', async (req, res) => {
       const { paths } = req.body;
       console.log(
         `[${new Date().toISOString()}] POST /api/run/start${paths ? ` (custom paths: ${paths.join(', ')})` : ' (default paths)'}`,
@@ -218,7 +241,7 @@ export class SubsyncarrPlusServer {
     });
 
     // Stop current run
-    this.app.post('/api/run/stop', (_req, res) => {
+    router.post('/api/run/stop', (_req, res) => {
       console.log(`[${new Date().toISOString()}] POST /api/run/stop`);
       try {
         this.coordinator.stopRun();
@@ -234,7 +257,7 @@ export class SubsyncarrPlusServer {
     });
 
     // Skip a file
-    this.app.post('/api/file/skip', (req, res) => {
+    router.post('/api/file/skip', (req, res) => {
       const { filePath } = req.body;
 
       if (!filePath) {
@@ -248,7 +271,7 @@ export class SubsyncarrPlusServer {
     });
 
     // Clear completed files
-    this.app.post('/api/files/clear', (req, res) => {
+    router.post('/api/files/clear', (req, res) => {
       console.log(`[${new Date().toISOString()}] POST /api/files/clear`);
       this.stateManager.clearCompletedFiles();
 
@@ -268,14 +291,14 @@ export class SubsyncarrPlusServer {
     });
 
     // Get skip status statistics
-    this.app.get('/api/skip-status', (_req, res) => {
+    router.get('/api/skip-status', (_req, res) => {
       console.log(`[${new Date().toISOString()}] GET /api/skip-status`);
       const stats = this.stateManager.getFailureStats();
       res.json(stats);
     });
 
     // Get skip status for specific file
-    this.app.get('/api/skip-status/:filePath(*)', (req, res) => {
+    router.get('/api/skip-status/:filePath(*)', (req, res) => {
       const filePath = decodeURIComponent(req.params.filePath);
       console.log(`[${new Date().toISOString()}] GET /api/skip-status/${filePath.split('/').pop()}`);
 
@@ -284,7 +307,7 @@ export class SubsyncarrPlusServer {
     });
 
     // Reset skip status for a file
-    this.app.post('/api/skip-status/reset', (req, res) => {
+    router.post('/api/skip-status/reset', (req, res) => {
       const { filePath, engine } = req.body;
 
       if (!filePath) {
