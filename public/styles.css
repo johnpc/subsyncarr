@@ -1,14 +1,121 @@
+/* Theme tokens.
+   Light is the default. Dark is applied by the [data-theme="dark"] attribute,
+   which the inline script in index.html sets before first paint from
+   localStorage (user override) or prefers-color-scheme (OS default). When JS
+   is unavailable the prefers-color-scheme media query below takes over.
+   Every color in this file is routed through one of these variables. */
 :root {
+  color-scheme: light;
+
+  /* Accents: *-text variants are tuned for use as text on a surface */
   --primary: #3b82f6;
   --primary-dark: #2563eb;
+  --primary-text: #3b82f6;
   --success: #10b981;
+  --success-rgb: 16, 185, 129;
+  --success-text: #059669;
   --error: #ef4444;
+  --error-dark: #dc2626;
+  --error-text: #dc2626;
   --warning: #f59e0b;
+  --warning-rgb: 245, 158, 11;
+  --warning-text: #d97706;
+  --on-accent: #ffffff;
+
+  /* Surfaces */
   --background: #f9fafb;
   --card-bg: #ffffff;
   --border: #e5e7eb;
+  --border-hover: #d1d5db;
+  --hover-tint: rgba(59, 130, 246, 0.08);
+  --shadow: rgba(0, 0, 0, 0.1);
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  /* Text */
   --text: #111827;
   --text-secondary: #6b7280;
+
+  /* Status badges and engine result chips */
+  --badge-info-bg: #dbeafe;
+  --badge-info-text: #1e40af;
+  --badge-success-bg: #d1fae5;
+  --badge-success-text: #065f46;
+  --badge-error-bg: #fee2e2;
+  --badge-error-text: #991b1b;
+  --badge-warning-bg: #fef3c7;
+  --badge-warning-text: #92400e;
+
+  /* Log viewer keeps a terminal look in both themes */
+  --log-bg: #1e1e1e;
+  --log-text: #d4d4d4;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --primary-text: #60a5fa;
+  --success-text: #34d399;
+  --error-text: #f87171;
+  --warning-text: #fbbf24;
+
+  --background: #111827;
+  --card-bg: #1f2937;
+  --border: #374151;
+  --border-hover: #4b5563;
+  --hover-tint: rgba(96, 165, 250, 0.15);
+  --shadow: rgba(0, 0, 0, 0.4);
+  --overlay: rgba(0, 0, 0, 0.7);
+
+  --text: #f3f4f6;
+  --text-secondary: #9ca3af;
+
+  --badge-info-bg: #1e3a8a;
+  --badge-info-text: #bfdbfe;
+  --badge-success-bg: #064e3b;
+  --badge-success-text: #a7f3d0;
+  --badge-error-bg: #7f1d1d;
+  --badge-error-text: #fecaca;
+  --badge-warning-bg: #78350f;
+  --badge-warning-text: #fde68a;
+
+  --log-bg: #0b1120;
+  --log-text: #d4d4d4;
+}
+
+/* No-JS fallback: follow the OS unless the user explicitly chose light.
+   Must mirror the [data-theme='dark'] block above. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --primary-text: #60a5fa;
+    --success-text: #34d399;
+    --error-text: #f87171;
+    --warning-text: #fbbf24;
+
+    --background: #111827;
+    --card-bg: #1f2937;
+    --border: #374151;
+    --border-hover: #4b5563;
+    --hover-tint: rgba(96, 165, 250, 0.15);
+    --shadow: rgba(0, 0, 0, 0.4);
+    --overlay: rgba(0, 0, 0, 0.7);
+
+    --text: #f3f4f6;
+    --text-secondary: #9ca3af;
+
+    --badge-info-bg: #1e3a8a;
+    --badge-info-text: #bfdbfe;
+    --badge-success-bg: #064e3b;
+    --badge-success-text: #a7f3d0;
+    --badge-error-bg: #7f1d1d;
+    --badge-error-text: #fecaca;
+    --badge-warning-bg: #78350f;
+    --badge-warning-text: #fde68a;
+
+    --log-bg: #0b1120;
+    --log-text: #d4d4d4;
+  }
 }
 
 * {
@@ -36,7 +143,7 @@ header {
   padding: 24px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .header-top {
@@ -47,6 +154,17 @@ header {
   gap: 20px;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.title-row h1 {
+  margin-bottom: 0;
+}
+
 h1 {
   font-size: 28px;
   margin-bottom: 4px;
@@ -55,6 +173,48 @@ h1 {
 .subtitle {
   color: var(--text-secondary);
   margin-bottom: 0;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--border);
+  border-color: var(--border-hover);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Show the label for the theme you would switch TO */
+.theme-when-dark {
+  display: none;
+}
+
+[data-theme='dark'] .theme-when-light {
+  display: none;
+}
+
+[data-theme='dark'] .theme-when-dark {
+  display: inline;
 }
 
 .status-indicators {
@@ -82,32 +242,38 @@ h1 {
 }
 
 .status-light.active {
-  background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(var(--success-rgb), 0.6);
   animation: pulse-green 2s infinite;
 }
 
 .status-light.inactive {
-  background: #f59e0b;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+  background: var(--warning);
+  box-shadow: 0 0 8px rgba(var(--warning-rgb), 0.6);
   animation: pulse-orange 2s infinite;
 }
 
 @keyframes pulse-green {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(var(--success-rgb), 0.6);
   }
   50% {
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.9), 0 0 24px rgba(16, 185, 129, 0.4);
+    box-shadow:
+      0 0 16px rgba(var(--success-rgb), 0.9),
+      0 0 24px rgba(var(--success-rgb), 0.4);
   }
 }
 
 @keyframes pulse-orange {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(var(--warning-rgb), 0.6);
   }
   50% {
-    box-shadow: 0 0 16px rgba(245, 158, 11, 0.9), 0 0 24px rgba(245, 158, 11, 0.4);
+    box-shadow:
+      0 0 16px rgba(var(--warning-rgb), 0.9),
+      0 0 24px rgba(var(--warning-rgb), 0.4);
   }
 }
 
@@ -156,7 +322,7 @@ h1 {
 
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--on-accent);
 }
 
 .btn-primary:hover {
@@ -169,22 +335,22 @@ h1 {
 }
 
 .btn-secondary:hover {
-  background: #d1d5db;
+  background: var(--border-hover);
 }
 
 .btn-danger {
   background: var(--error);
-  color: white;
+  color: var(--on-accent);
 }
 
 .btn-danger:hover {
-  background: #dc2626;
+  background: var(--error-dark);
 }
 
 .btn-skip {
   padding: 6px 12px;
   background: var(--error);
-  color: white;
+  color: var(--on-accent);
   border: none;
   border-radius: 4px;
   font-size: 12px;
@@ -200,7 +366,7 @@ section {
   padding: 24px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow);
 }
 
 h2 {
@@ -259,7 +425,7 @@ h2 {
 }
 
 .file-card {
-  background: #f9fafb;
+  background: var(--background);
   padding: 16px;
   border-radius: 6px;
   margin-bottom: 12px;
@@ -313,13 +479,13 @@ h2 {
 }
 
 .engine-result.success {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .engine-result.error {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--badge-error-bg);
+  color: var(--badge-error-text);
   flex-direction: column;
   align-items: stretch;
 }
@@ -375,18 +541,18 @@ td {
 }
 
 .status-badge.running {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--badge-info-bg);
+  color: var(--badge-info-text);
 }
 
 .status-badge.completed {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .status-badge.cancelled {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .no-data {
@@ -401,7 +567,7 @@ td {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -516,7 +682,7 @@ td {
 }
 
 .tree-row:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--hover-tint);
 }
 
 .tree-chevron {
@@ -559,7 +725,7 @@ td {
 
 .tree-add {
   background: var(--primary);
-  color: white;
+  color: var(--on-accent);
   border: none;
   border-radius: 4px;
   width: 22px;
@@ -589,7 +755,7 @@ td {
 }
 
 .tree-error {
-  color: var(--error);
+  color: var(--error-text);
 }
 
 .selected-paths {
@@ -648,7 +814,7 @@ td {
 
 .selected-path-remove:hover {
   background: var(--error);
-  color: white;
+  color: var(--on-accent);
 }
 
 .modal-actions {
@@ -665,7 +831,7 @@ td {
 .btn-view-logs {
   padding: 6px 12px;
   background: var(--primary);
-  color: white;
+  color: var(--on-accent);
   border: none;
   border-radius: 4px;
   font-size: 12px;
@@ -687,8 +853,8 @@ td {
 
 .logs-content {
   flex: 1;
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: var(--log-bg);
+  color: var(--log-text);
   padding: 16px;
   border-radius: 6px;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -727,12 +893,12 @@ td {
 }
 
 .engine-pass {
-  color: #059669;
+  color: var(--success-text);
   font-weight: 600;
 }
 
 .engine-fail {
-  color: #dc2626;
+  color: var(--error-text);
   font-weight: 600;
 }
 
@@ -745,19 +911,19 @@ td {
 }
 
 .stat-clickable:hover {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .stat-completed {
-  color: #059669;
+  color: var(--success-text);
 }
 
 .stat-skipped {
-  color: #d97706;
+  color: var(--warning-text);
 }
 
 .stat-failed {
-  color: #dc2626;
+  color: var(--error-text);
 }
 
 /* File list modal */
@@ -815,7 +981,7 @@ td {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--error);
+  color: var(--error-text);
   margin-right: 8px;
 }
 
@@ -899,7 +1065,8 @@ td {
     white-space: nowrap;
   }
 
-  th, td {
+  th,
+  td {
     padding: 8px;
     font-size: 13px;
   }

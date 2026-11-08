@@ -1,4 +1,63 @@
 const API_BASE = window.__BASE_PATH__ || '';
+const THEME_STORAGE_KEY = 'theme';
+
+// Theme handling. The inline script in index.html applies the initial theme
+// before first paint; the code below keeps the header toggle, localStorage and
+// the OS preference in sync afterwards.
+const darkSchemeQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+function systemPrefersDark() {
+  return Boolean(darkSchemeQuery && darkSchemeQuery.matches);
+}
+
+function readStoredTheme() {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    return stored === 'dark' || stored === 'light' ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const toggle = document.getElementById('themeToggle');
+  if (toggle) {
+    const label = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`;
+    toggle.setAttribute('aria-label', label);
+    toggle.title = label;
+  }
+}
+
+function initTheme() {
+  applyTheme(readStoredTheme() || (systemPrefersDark() ? 'dark' : 'light'));
+
+  const toggle = document.getElementById('themeToggle');
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const next = currentTheme() === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, next);
+      } catch {
+        // localStorage unavailable (private mode / disabled); the choice still applies for this page view.
+      }
+      applyTheme(next);
+    });
+  }
+
+  // Follow live OS changes until the user picks an explicit override.
+  if (darkSchemeQuery && typeof darkSchemeQuery.addEventListener === 'function') {
+    darkSchemeQuery.addEventListener('change', (event) => {
+      if (!readStoredTheme()) {
+        applyTheme(event.matches ? 'dark' : 'light');
+      }
+    });
+  }
+}
 
 class SubsyncarrPlusClient {
   constructor() {
@@ -873,9 +932,11 @@ class SubsyncarrPlusClient {
 let client;
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     client = new SubsyncarrPlusClient();
   });
 } else {
+  initTheme();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   client = new SubsyncarrClient();
 }
