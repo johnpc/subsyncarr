@@ -1,3 +1,5 @@
+import { existsSync } from 'fs';
+
 export interface ScanConfig {
   includePaths: string[];
   excludePaths: string[];
@@ -29,9 +31,17 @@ function validatePath(path: string): boolean {
   return path.startsWith('/') && !path.includes('..');
 }
 
+function parsePathList(value: string | undefined): string[] {
+  return (value ?? '')
+    .split(',')
+    .map((path) => path.trim())
+    .filter(Boolean);
+}
+
 export function getScanConfig(): ScanConfig {
-  const scanPaths = process.env.SCAN_PATHS?.split(',').filter(Boolean) || ['/scan_dir'];
-  const excludePaths = process.env.EXCLUDE_PATHS?.split(',').filter(Boolean) || [];
+  const parsedScanPaths = parsePathList(process.env.SCAN_PATHS);
+  const scanPaths = parsedScanPaths.length > 0 ? parsedScanPaths : ['/scan_dir'];
+  const excludePaths = parsePathList(process.env.EXCLUDE_PATHS);
 
   // Validate paths
   const validIncludePaths = scanPaths.filter((path) => {
@@ -49,6 +59,12 @@ export function getScanConfig(): ScanConfig {
     }
     return isValid;
   });
+
+  validIncludePaths
+    .filter((path) => !existsSync(path))
+    .forEach((path) => {
+      console.warn(`${new Date().toLocaleString()} Scan path does not exist: ${path} (is it mounted as a volume?)`);
+    });
 
   if (validIncludePaths.length === 0) {
     console.warn(`${new Date().toLocaleString()} No valid scan paths provided, defaulting to /scan_dir`);

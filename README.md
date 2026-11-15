@@ -143,6 +143,21 @@ environment:
   - SYNC_ENGINE_TIMEOUT_MS=3600000 # 60 minutes for large files
 ```
 
+### Multiple Media Folders
+
+Mount each folder at its own path inside the container **and** list every one of those paths in `SCAN_PATHS`. A folder that is mounted but missing from `SCAN_PATHS` is neither scanned nor shown in the web UI. Each folder needs its own container path: two volumes mounted at the same path (e.g. both at `/tv`) overwrite each other.
+
+```yaml
+volumes:
+  - /media/movies:/movies
+  - /media/tv-john:/tv
+  - /media/tv-jane:/tv2
+environment:
+  - SCAN_PATHS=/movies,/tv,/tv2
+```
+
+The container path names don't matter (Subsyncarr treats movies and TV the same), so call them whatever you like. At startup, the logs show the resolved paths under `Scan configuration` and warn about any path that doesn't exist in the container.
+
 ### Directory Structure
 
 Your media directory should be organized with video files and their corresponding subtitle files using matching names:
