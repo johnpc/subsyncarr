@@ -3,7 +3,7 @@ import { StateManager } from './stateManager';
 import { ProcessingCoordinator } from './coordinator';
 import { SubsyncarrPlusServer } from './server';
 import { schedule } from 'node-cron';
-import { getRetentionConfig } from './config';
+import { getRetentionConfig, logScanConfig } from './config';
 import { sweepLeftoverTempDirs } from './tempDir';
 
 async function main() {
@@ -12,6 +12,7 @@ async function main() {
   const host = process.env.WEB_HOST || '0.0.0.0';
 
   console.log(`[${new Date().toISOString()}] Initializing Subsyncarr Plus Server...`);
+  logScanConfig();
 
   const sweptTempDirs = sweepLeftoverTempDirs();
   if (sweptTempDirs > 0) {

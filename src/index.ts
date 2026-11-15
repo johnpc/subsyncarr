@@ -1,10 +1,11 @@
 import { findAllSrtFiles } from './findAllSrtFiles';
-import { getScanConfig } from './config';
+import { getScanConfig, logScanConfig } from './config';
 import { processSrtFile } from './processSrtFile';
 
 async function main(): Promise<void> {
   try {
     // Find all subtitle files (.srt, .ass)
+    logScanConfig();
     const scanConfig = getScanConfig();
     const { files: srtFiles, skippedCount } = await findAllSrtFiles(scanConfig);
     console.log(

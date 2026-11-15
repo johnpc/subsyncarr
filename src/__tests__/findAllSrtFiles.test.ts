@@ -23,6 +23,18 @@ describe('findAllSrtFiles', () => {
   const touch = (...names: string[]) => names.forEach((name) => writeFileSync(join(dir, name), 'x'));
   const scan = () => findAllSrtFiles({ includePaths: [dir], excludePaths: [] });
 
+  it('skips include paths that do not exist instead of failing the whole scan', async () => {
+    process.env.INCLUDE_ENGINES = 'ffsubsync';
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const missing = join(dir, 'not-mounted');
+    touch('show.en.srt');
+
+    const result = await findAllSrtFiles({ includePaths: [missing, dir], excludePaths: [] });
+
+    expect(result.files).toEqual([join(dir, 'show.en.srt')]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(`does not exist: ${missing}`));
+  });
+
   it('finds .srt and .ass files but never generated outputs', async () => {
     process.env.INCLUDE_ENGINES = 'ffsubsync,alass';
     touch('a.en.srt', 'b.en.ass', 'b.en.ffsubsync.ass', 'c.en.alass.ass', 'd.vtt');

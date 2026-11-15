@@ -83,6 +83,11 @@ export async function findAllSrtFiles(config: ScanConfig): Promise<ScanResult> {
 
   // Scan all included paths
   for (const includePath of config.includePaths) {
+    // An unmounted path shouldn't abort the whole run for the paths that do exist.
+    if (!existsSync(includePath)) {
+      console.warn(`${new Date().toLocaleString()} Skipping scan path that does not exist: ${includePath}`);
+      continue;
+    }
     await scan(includePath);
   }
 
