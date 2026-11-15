@@ -1,4 +1,4 @@
-import { getScanConfig } from '../config';
+import { getScanConfig, logScanConfig } from '../config';
 
 describe('getScanConfig', () => {
   const originalEnv = process.env;
@@ -37,9 +37,21 @@ describe('getScanConfig', () => {
     expect(getScanConfig().includePaths).toEqual(['/scan_dir']);
   });
 
-  it('warns when a scan path does not exist', () => {
-    process.env.SCAN_PATHS = '/definitely-not-mounted-xyz';
+  it('does not log when resolving config (it is called on every API request)', () => {
+    process.env.SCAN_PATHS = '/definitely-not-mounted-xyz,relative';
     getScanConfig();
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.log).not.toHaveBeenCalled();
+  });
+
+  it('logScanConfig warns about missing and invalid paths', () => {
+    process.env.SCAN_PATHS = '/definitely-not-mounted-xyz,relative';
+    logScanConfig();
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('does not exist: /definitely-not-mounted-xyz'));
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid include path: relative'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Scan configuration:'), {
+      includePaths: ['/definitely-not-mounted-xyz'],
+      excludePaths: [],
+    });
   });
 });

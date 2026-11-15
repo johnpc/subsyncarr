@@ -156,7 +156,7 @@ environment:
   - SCAN_PATHS=/movies,/tv,/tv2
 ```
 
-The container path names don't matter (Subsyncarr treats movies and TV the same), so call them whatever you like. At startup, the logs show the resolved paths under `Scan configuration` and warn about any path that doesn't exist in the container.
+The container path names don't matter (Subsyncarr treats movies and TV the same), so call them whatever you like. At startup, the logs show the resolved paths under `Scan configuration` and warn about any path that doesn't exist in the container. Runs skip missing paths and still process the rest.
 
 ### Directory Structure
 

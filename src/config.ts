@@ -38,48 +38,45 @@ function parsePathList(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
-export function getScanConfig(): ScanConfig {
+interface ResolvedScanConfig {
+  config: ScanConfig;
+  warnings: string[];
+}
+
+function resolveScanConfig(): ResolvedScanConfig {
   const parsedScanPaths = parsePathList(process.env.SCAN_PATHS);
   const scanPaths = parsedScanPaths.length > 0 ? parsedScanPaths : ['/scan_dir'];
   const excludePaths = parsePathList(process.env.EXCLUDE_PATHS);
 
-  // Validate paths
-  const validIncludePaths = scanPaths.filter((path) => {
-    const isValid = validatePath(path);
-    if (!isValid) {
-      console.warn(`${new Date().toLocaleString()} Invalid include path: ${path}`);
-    }
-    return isValid;
-  });
+  const includePaths = scanPaths.filter(validatePath);
+  const validExcludePaths = excludePaths.filter(validatePath);
 
-  const validExcludePaths = excludePaths.filter((path) => {
-    const isValid = validatePath(path);
-    if (!isValid) {
-      console.warn(`${new Date().toLocaleString()} Invalid exclude path: ${path}`);
-    }
-    return isValid;
-  });
+  const warnings = [
+    ...scanPaths.filter((path) => !validatePath(path)).map((path) => `Invalid include path: ${path}`),
+    ...excludePaths.filter((path) => !validatePath(path)).map((path) => `Invalid exclude path: ${path}`),
+    ...includePaths
+      .filter((path) => !existsSync(path))
+      .map((path) => `Scan path does not exist: ${path} (is it mounted as a volume?)`),
+  ];
 
-  validIncludePaths
-    .filter((path) => !existsSync(path))
-    .forEach((path) => {
-      console.warn(`${new Date().toLocaleString()} Scan path does not exist: ${path} (is it mounted as a volume?)`);
-    });
-
-  if (validIncludePaths.length === 0) {
-    console.warn(`${new Date().toLocaleString()} No valid scan paths provided, defaulting to /scan_dir`);
-    validIncludePaths.push('/scan_dir');
+  if (includePaths.length === 0) {
+    warnings.push('No valid scan paths provided, defaulting to /scan_dir');
+    includePaths.push('/scan_dir');
   }
 
-  console.log(`${new Date().toLocaleString()} Scan configuration:`, {
-    includePaths: validIncludePaths,
-    excludePaths: validExcludePaths,
-  });
+  return { config: { includePaths, excludePaths: validExcludePaths }, warnings };
+}
 
-  return {
-    includePaths: validIncludePaths,
-    excludePaths: validExcludePaths,
-  };
+/** Resolves scan paths from the environment. Silent; call logScanConfig once at startup for diagnostics. */
+export function getScanConfig(): ScanConfig {
+  return resolveScanConfig().config;
+}
+
+/** Logs the resolved scan configuration and any invalid or missing paths. */
+export function logScanConfig(): void {
+  const { config, warnings } = resolveScanConfig();
+  warnings.forEach((warning) => console.warn(`${new Date().toLocaleString()} ${warning}`));
+  console.log(`${new Date().toLocaleString()} Scan configuration:`, config);
 }
 
 export function getRetentionConfig(): RetentionConfig {
